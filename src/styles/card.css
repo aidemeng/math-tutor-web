@@ -1,0 +1,109 @@
+/* ============================================================
+   题卡
+   ============================================================ */
+
+.qcard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-5);
+  border-radius: var(--r-xl);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color var(--t-base) var(--ease-out),
+    box-shadow var(--t-base) var(--ease-out);
+}
+.qcard--current {
+  border-color: transparent;
+  box-shadow:
+    var(--shadow-md),
+    0 0 0 2px var(--brand-ring);
+}
+
+.qcard--loading {
+  gap: 0;
+}
+
+.qcard__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+.qcard__source {
+  max-width: 74%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qcard__title {
+  margin: 0;
+  font-size: 17.5px;
+  font-weight: 680;
+  line-height: 1.42;
+  letter-spacing: -0.3px;
+}
+
+.qcard__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: -4px;
+}
+
+.qcard__stem {
+  font-size: 15px;
+}
+
+.qcard__derive {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--r-lg);
+  background: var(--paper-sunken);
+}
+.qcard__derive-btn {
+  flex: 1;
+  padding: 9px 4px;
+  border-radius: var(--r-md);
+  font-size: 13.5px;
+  font-weight: 570;
+  color: var(--ink-2);
+  transition:
+    background-color var(--t-fast) var(--ease-out),
+    color var(--t-fast) var(--ease-out),
+    transform var(--t-fast) var(--ease-out);
+}
+.qcard__derive-btn:hover:not(:disabled) {
+  background: var(--paper);
+  color: var(--brand-ink);
+  box-shadow: var(--shadow-xs);
+}
+.qcard__derive-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.qcard__derive-btn:disabled {
+  opacity: 0.5;
+}
+
+.qcard__footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.qcard__video {
+  width: 100%;
+}
+.qcard__analysis {
+  width: 100%;
+  background: none;
+  border: 0;
+  color: var(--ink-2);
+  font-weight: 560;
+  min-height: 40px;
+}
+.qcard__analysis:hover {
+  color: var(--brand-ink);
+}

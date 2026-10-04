@@ -1,0 +1,128 @@
+/* ============================================================
+   输入框（对话 / 首页共用）
+   ============================================================ */
+
+.composer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: 10px;
+  border-radius: var(--r-2xl);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-md);
+  transition: box-shadow var(--t-base) var(--ease-out);
+}
+.composer:focus-within {
+  box-shadow:
+    var(--shadow-lg),
+    0 0 0 3px var(--brand-ring);
+  border-color: transparent;
+}
+
+.composer__row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-2);
+}
+
+.composer__input {
+  flex: 1;
+  min-width: 0;
+  min-height: 42px;
+  max-height: 138px;
+  padding: 10px 2px;
+  border: 0;
+  background: none;
+  font-size: 15.5px;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+  overflow-y: auto;
+}
+.composer__input::placeholder {
+  color: var(--ink-3);
+}
+.composer__input:disabled {
+  opacity: 0.6;
+}
+
+.composer__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  transition:
+    transform var(--t-fast) var(--ease-out),
+    opacity var(--t-fast) var(--ease-out),
+    background-color var(--t-fast) var(--ease-out);
+}
+.composer__icon:active:not(:disabled) {
+  transform: scale(0.9);
+}
+.composer__icon:disabled {
+  cursor: not-allowed;
+}
+
+.composer__icon--photo {
+  background: var(--paper-sunken);
+  color: var(--brand-ink);
+}
+.composer__icon--photo:disabled {
+  color: var(--ink-3);
+  opacity: 0.6;
+}
+
+.composer__icon--send {
+  background: linear-gradient(135deg, var(--brand-bright) 0%, var(--brand-deep) 100%);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(9, 122, 82, 0.3);
+}
+.composer__icon--send:disabled {
+  background: var(--paper-sunken);
+  color: var(--ink-3);
+  box-shadow: none;
+}
+
+.composer__attachment {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 6px 4px 2px 6px;
+  animation: riseIn var(--t-base) var(--ease-out);
+}
+.composer__thumb {
+  flex: none;
+  width: 54px;
+  height: 54px;
+  object-fit: cover;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+}
+.composer__attachment-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+}
+.composer__attachment-meta .pill {
+  align-self: flex-start;
+}
+
+/* ---------- 对话底部固定容器 ---------- */
+
+.composer-dock {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  z-index: 35;
+  width: 100%;
+  max-width: var(--app-max);
+  transform: translateX(-50%);
+  padding: var(--sp-2) var(--sp-3) calc(var(--sp-3) + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, transparent 0%, var(--canvas) 34%, var(--canvas) 100%);
+}

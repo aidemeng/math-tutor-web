@@ -1,0 +1,187 @@
+/* ============================================================
+   对话页
+   ============================================================ */
+
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  padding-top: var(--sp-4);
+}
+
+.chat__notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: 12px var(--sp-4);
+  border-radius: var(--r-lg);
+  background: linear-gradient(135deg, var(--brand-soft) 0%, var(--brand-soft-2) 100%);
+  border: 1px solid var(--line);
+  color: var(--brand-ink);
+  font-size: 13.5px;
+  font-weight: 540;
+  text-align: left;
+  transition: transform var(--t-fast) var(--ease-out);
+}
+.chat__notice:active {
+  transform: scale(0.99);
+}
+.chat__notice strong {
+  font-size: 15px;
+  font-weight: 720;
+  margin-right: 2px;
+}
+.chat__notice-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  font-weight: 640;
+}
+
+.chat__error {
+  margin: 0;
+}
+
+/* ---------- 一轮问答 ---------- */
+
+.turn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.turn__user {
+  align-self: flex-end;
+  max-width: 86%;
+  padding: 11px var(--sp-4);
+  border-radius: var(--r-lg) var(--r-lg) 6px var(--r-lg);
+  background: linear-gradient(135deg, var(--brand-bright) 0%, var(--brand-deep) 100%);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(9, 122, 82, 0.24);
+  animation: riseIn var(--t-base) var(--ease-out);
+}
+
+.turn__photo {
+  display: block;
+  width: 168px;
+  max-width: 100%;
+  margin-bottom: 8px;
+  border-radius: var(--r-md);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.turn__prompt {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.turn__error {
+  align-self: flex-start;
+  max-width: 88%;
+}
+
+/* ---------- 助手消息 ---------- */
+
+.agent {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  max-width: 94%;
+  animation: riseIn var(--t-base) var(--ease-out);
+}
+
+.agent__avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  margin-top: 4px;
+  border-radius: 9px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--brand-bright) 0%, var(--brand-deep) 100%);
+  box-shadow: 0 4px 10px rgba(9, 122, 82, 0.24);
+}
+
+.agent__bubble {
+  flex: 1;
+  min-width: 0;
+  padding: 12px var(--sp-4);
+  border-radius: 6px var(--r-lg) var(--r-lg) var(--r-lg);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-xs);
+}
+
+.agent__typing {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 0 1px;
+}
+.agent__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--brand);
+  opacity: 0.45;
+  animation: typingDot 1.25s ease-in-out infinite;
+}
+.agent__dot:nth-child(2) {
+  animation-delay: 0.16s;
+}
+.agent__dot:nth-child(3) {
+  animation-delay: 0.32s;
+}
+@keyframes typingDot {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+.agent__status {
+  margin-left: 6px;
+  color: var(--ink-3);
+  font-size: 12.5px;
+}
+
+/* ---------- 题卡轮播 ---------- */
+
+.carousel {
+  margin: 0 -14px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel__row {
+  display: flex;
+  gap: var(--sp-3);
+  padding: 4px var(--sp-4) 6px;
+}
+
+.carousel__slot {
+  flex: 0 0 min(84%, 400px);
+  scroll-snap-align: center;
+}
+
+.carousel--single .carousel__slot {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+}

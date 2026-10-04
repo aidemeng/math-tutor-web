@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no"
+    />
+    <title>数学备课助手</title>
+    <meta name="description" content="面向数学老师的备课助手：找真题、出变式、降难度、看解析、做讲解视频。" />
+
+    <!-- PWA / 移动端 -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#f6faf7" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0d1512" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="备课助手" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- 首屏骨架，避免 JS 加载前白屏闪烁 -->
+    <style>
+      html,
+      body,
+      #root {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        background: #f6faf7;
+        color: #0e1a15;
+        font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', 'Segoe UI',
+          Roboto, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #0d1512;
+          color: #e8f0eb;
+        }
+      }
+      #boot {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        gap: 10px;
+      }
+      #boot i {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: #0b7a55;
+        opacity: 0.4;
+        animation: bootDot 1.2s ease-in-out infinite;
+      }
+      #boot i:nth-child(2) {
+        animation-delay: 0.15s;
+      }
+      #boot i:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+      @keyframes bootDot {
+        0%,
+        100% {
+          transform: translateY(0);
+          opacity: 0.35;
+        }
+        40% {
+          transform: translateY(-6px);
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div id="boot"><i></i><i></i><i></i></div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
