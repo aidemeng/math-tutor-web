@@ -52,6 +52,7 @@ export interface TutorClient {
   listVideoJobs(): Promise<{ jobs: VideoJob[] }>;
   getVideoJob(id: string): Promise<{ job: VideoJob }>;
   fetchVideo(id: string): Promise<Blob>;
+  videoPlayback(id: string): Promise<{url: string; expiresAt: number}>;
 }
 
 function query(params: Record<string, string | number | undefined | null>): string {
@@ -254,6 +255,7 @@ export function createClient(options: { getToken: () => string | null }): TutorC
       }),
     listVideoJobs: () => request('/v1/video-jobs'),
     getVideoJob: (id) => request(`/v1/video-jobs/${encodeURIComponent(id)}`),
+    videoPlayback: (id) => request(`/v1/video-jobs/${encodeURIComponent(id)}/playback`, {method: 'POST', signal: AbortSignal.timeout(15000)}),
     fetchVideo: (id) =>
       binary(`/v1/video-jobs/${encodeURIComponent(id)}/video`, /^video\/mp4/i),
   };

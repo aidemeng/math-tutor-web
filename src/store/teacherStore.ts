@@ -44,6 +44,7 @@ export interface TeacherStore {
   assetUrl(key: string, index: number): Promise<string>;
   photoUrl(conversationId: string, photoId: string): Promise<string>;
   videoUrl(jobId: string): Promise<string>;
+  downloadVideo(jobId: string): Promise<string>;
   /** 为历史对话补齐照片地址。 */
   hydratePhotos(): Promise<void>;
 
@@ -378,6 +379,10 @@ export function createTeacherStore(options: {
   function videoUrl(jobId: string): Promise<string> {
     const job = state.jobs.find((item) => item.id === jobId);
     if (!job || job.status !== 'ready') return Promise.reject(stateError('VIDEO_NOT_READY'));
+    return client.videoPlayback(jobId).then(result => result.url);
+  }
+
+  function downloadVideo(jobId: string): Promise<string> {
     return media.get(`video:${jobId}`, () => client.fetchVideo(jobId));
   }
 
@@ -419,6 +424,7 @@ export function createTeacherStore(options: {
     assetUrl,
     photoUrl,
     videoUrl,
+    downloadVideo,
     hydratePhotos,
     dispose() {
       disposed = true;

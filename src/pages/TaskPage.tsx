@@ -25,6 +25,8 @@ export function TaskPage() {
   const [loadingVideo, setLoadingVideo] = useState(false);
   const [error, setError] = useState('');
   const [retrying, setRetrying] = useState(false);
+  const [playAttempt, setPlayAttempt] = useState(0);
+  const [saving, setSaving] = useState(false);
 
   const job = store?.state.jobs.find((item) => item.id === id) ?? null;
   const question = useMemo(() => {
@@ -43,15 +45,42 @@ export function TaskPage() {
     void store.refreshJobs().catch(() => {});
   }, [store, id]);
 
+  const jobStatus = job?.status;
   useEffect(() => {
-    if (!store || !id || !job || job.status !== 'ready' || videoSrc || loadingVideo) return;
+    setVideoSrc(null);
+    setError('');
+    if (!store || !id || jobStatus !== 'ready') return;
+    let cancelled = false;
     setLoadingVideo(true);
-    store
-      .videoUrl(id)
-      .then(setVideoSrc)
-      .catch((caught) => setError(friendlyError(caught)))
-      .finally(() => setLoadingVideo(false));
-  }, [store, id, job, videoSrc, loadingVideo]);
+    store.videoUrl(id).then(url => {
+      if (!cancelled) setVideoSrc(url);
+    }).catch(caught => {
+      if (!cancelled) { setError(friendlyError(caught)); setLoadingVideo(false); }
+    });
+    return () => { cancelled = true; };
+  }, [store, id, jobStatus, playAttempt]);
+
+  useEffect(() => {
+    if (!videoSrc || !loadingVideo) return;
+    const timer = setTimeout(() => {
+      setLoadingVideo(false);
+      setError('视频加载超时，请检查网络后重试');
+    }, 30000);
+    return () => clearTimeout(timer);
+  }, [videoSrc, loadingVideo]);
+
+  async function saveVideo() {
+    if (!store || saving) return;
+    setSaving(true);
+    try {
+      const url = await store.downloadVideo(id);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `讲解视频-${id.slice(0, 8)}.mp4`;
+      link.click();
+    } catch (caught) { setError(friendlyError(caught)); }
+    finally { setSaving(false); }
+  }
 
   async function retry() {
     if (!store || !id || retrying) return;
@@ -100,11 +129,17 @@ export function TaskPage() {
 
         {status === 'ready' ? (
           videoSrc ? (
-            <video className="task__player" src={videoSrc} controls playsInline preload="metadata" />
+            <div>
+              <video key={videoSrc} className="task__player" src={videoSrc} controls playsInline preload="metadata"
+                onLoadedMetadata={() => setLoadingVideo(false)} onCanPlay={() => {setLoadingVideo(false); setError('');}}
+                onWaiting={() => setLoadingVideo(true)} onPlaying={() => setLoadingVideo(false)}
+                onError={() => {setLoadingVideo(false); setError('视频暂时无法播放，请重试');}} />
+              {loadingVideo && !error ? <p className="task__note">正在缓冲视频…</p> : null}
+            </div>
           ) : (
             <div className="task__player task__player--placeholder">
               <div className="skeleton" />
-              <span className="task__player-hint">正在加载视频…</span>
+              <span className="task__player-hint">{error ? '视频暂时无法加载' : '正在连接视频…'}</span>
             </div>
           )
         ) : null}
@@ -127,11 +162,12 @@ export function TaskPage() {
         ) : null}
 
         <div className="task__actions">
+          {status === 'ready' && error ? <button type="button" className="btn btn--ghost btn--block" onClick={() => setPlayAttempt(value => value + 1)}>重新加载视频</button> : null}
           {status === 'ready' && videoSrc ? (
-            <a className="btn btn--primary btn--block" href={videoSrc} download={`讲解视频-${id.slice(0, 8)}.mp4`}>
+            <button className="btn btn--primary btn--block" type="button" disabled={saving} onClick={() => void saveVideo()}>
               <Icon name="download" size={17} />
-              保存到相册
-            </a>
+              {saving ? '正在下载…' : '下载视频'}
+            </button>
           ) : null}
           {status === 'failed' ? (
             <button type="button" className="btn btn--primary btn--block" onClick={() => void retry()} disabled={retrying}>
