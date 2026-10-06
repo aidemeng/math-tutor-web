@@ -103,7 +103,7 @@ export function TaskPage() {
             <video className="task__player" src={videoSrc} controls playsInline preload="metadata" />
           ) : (
             <div className="task__player task__player--placeholder">
-              <div className="skeleton" style={{ width: '100%', height: '100%' }} />
+              <div className="skeleton" />
               <span className="task__player-hint">正在加载视频…</span>
             </div>
           )
@@ -149,7 +149,7 @@ export function TaskPage() {
 
       {question ? (
         <section className="card task__question">
-          <span className="pill">{question.source}</span>
+          <span className="pill pill--plain">{question.source}</span>
           <Markdown value={question.stem} questionKey={question.key} />
         </section>
       ) : null}

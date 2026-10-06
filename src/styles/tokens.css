@@ -1,65 +1,69 @@
 /* ============================================================
    设计令牌 —— 数学备课助手 · Web PWA
    浅色 / 深色双主题，跟随系统。所有颜色只在此处定义。
+
+   取向：克制的工具感。层级靠「画布 / 纸面 / 下沉面」三层色面
+   和 1px 细线区分，不靠渐变、光晕与重投影。
    ============================================================ */
 
 :root {
   color-scheme: light;
 
   /* — 画布与表面 — */
-  --canvas: #f4f8f5;
-  --canvas-tint-1: rgba(22, 181, 127, 0.1);
-  --canvas-tint-2: rgba(47, 109, 158, 0.08);
+  --canvas: #f5f6f4;
   --paper: #ffffff;
   --paper-raised: #ffffff;
-  --paper-sunken: #f0f6f2;
-  --glass: rgba(255, 255, 255, 0.72);
-  --glass-strong: rgba(255, 255, 255, 0.88);
+  --paper-sunken: #f1f2ef;
+  --glass: rgba(252, 253, 252, 0.84);
+  --glass-strong: rgba(252, 253, 252, 0.94);
 
   /* — 文字 — */
-  --ink: #0c1b14;
-  --ink-2: #56685d;
-  --ink-3: #87998e;
+  --ink: #171b19;
+  --ink-2: #5e6663;
+  --ink-3: #7c8480;
   --ink-inverse: #ffffff;
 
   /* — 线条 — */
-  --line: rgba(20, 62, 42, 0.1);
-  --line-soft: rgba(20, 62, 42, 0.06);
-  --line-strong: rgba(20, 62, 42, 0.16);
+  --line: rgba(20, 28, 24, 0.09);
+  --line-soft: rgba(20, 28, 24, 0.055);
+  --line-strong: rgba(20, 28, 24, 0.16);
 
-  /* — 品牌 — */
-  --brand: #0b7a55;
-  --brand-deep: #096344;
-  --brand-bright: #17b57f;
-  --brand-ink: #0a5c40;
-  --brand-soft: #e6f6ee;
-  --brand-soft-2: #f1faf5;
-  --brand-ring: rgba(11, 122, 85, 0.22);
+  /* — 品牌：偏冷的墨绿，压掉荧光感 — */
+  --brand: #15704e;
+  --brand-ink: #136046;
+  --brand-soft: #e7f0ea;
+  --brand-soft-2: #f2f7f4;
+  --brand-ring: rgba(21, 112, 78, 0.16);
+
+  /* 实心品牌块（按钮 / 用户气泡）：保证白字对比度 ≥ 4.5:1 */
+  --brand-fill: #15704e;
+  --brand-fill-active: #105b3f;
+  --brand-fill-ink: #ffffff;
 
   /* — 语义色 — */
-  --warn: #a8711f;
-  --warn-soft: #fbf1dc;
-  --info: #2f6d9e;
-  --info-soft: #e6f0f9;
-  --danger: #b04a2c;
-  --danger-soft: #fdeee9;
-  --success: #0b7a55;
-  --success-soft: #e6f6ee;
+  --warn: #8a6216;
+  --warn-soft: #f9f0da;
+  --info: #2b5f88;
+  --info-soft: #e8eff6;
+  --danger: #a4402a;
+  --danger-soft: #fbede8;
+  --success: #15704e;
+  --success-soft: #e7f0ea;
 
-  /* — 阴影：多层柔和投影 — */
-  --shadow-xs: 0 1px 2px rgba(16, 44, 31, 0.04);
-  --shadow-sm: 0 1px 2px rgba(16, 44, 31, 0.04), 0 4px 10px rgba(16, 44, 31, 0.045);
-  --shadow-md: 0 2px 4px rgba(16, 44, 31, 0.04), 0 10px 24px rgba(16, 44, 31, 0.07);
-  --shadow-lg: 0 4px 8px rgba(16, 44, 31, 0.05), 0 20px 44px rgba(16, 44, 31, 0.1);
-  --shadow-brand: 0 6px 16px rgba(9, 122, 82, 0.26);
+  /* — 阴影：只做「微微浮起」，不做光晕 — */
+  --shadow-xs: 0 1px 1px rgba(17, 26, 21, 0.03);
+  --shadow-sm: 0 1px 2px rgba(17, 26, 21, 0.05);
+  --shadow-md: 0 2px 8px rgba(17, 26, 21, 0.07);
+  --shadow-lg: 0 10px 28px rgba(17, 26, 21, 0.12);
+  --shadow-brand: 0 1px 2px rgba(16, 91, 63, 0.22);
 
-  /* — 圆角 — */
-  --r-xs: 8px;
-  --r-sm: 12px;
-  --r-md: 16px;
-  --r-lg: 20px;
-  --r-xl: 26px;
-  --r-2xl: 34px;
+  /* — 圆角：紧凑档位，避免大圆角的松垮感 — */
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 10px;
+  --r-xl: 12px;
+  --r-2xl: 16px;
   --r-pill: 999px;
 
   /* — 间距 — */
@@ -78,60 +82,60 @@
 
   /* — 动效 — */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
-  --t-fast: 0.14s;
-  --t-base: 0.24s;
-  --t-slow: 0.4s;
+  --t-fast: 0.12s;
+  --t-base: 0.18s;
+  --t-slow: 0.26s;
 
   /* — 布局 — */
   --app-max: 560px;
-  --tabbar-h: 72px;
-  --appbar-h: 56px;
+  --tabbar-h: 68px;
+  --appbar-h: 54px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
 
-    --canvas: #0b120f;
-    --canvas-tint-1: rgba(23, 181, 127, 0.13);
-    --canvas-tint-2: rgba(47, 109, 158, 0.12);
-    --paper: #151f1a;
-    --paper-raised: #1a2620;
-    --paper-sunken: #101815;
-    --glass: rgba(16, 25, 21, 0.72);
-    --glass-strong: rgba(16, 25, 21, 0.9);
+    --canvas: #0f1110;
+    --paper: #191d1b;
+    --paper-raised: #202422;
+    --paper-sunken: #141816;
+    --glass: rgba(20, 24, 22, 0.84);
+    --glass-strong: rgba(20, 24, 22, 0.94);
 
-    --ink: #e9f1ec;
-    --ink-2: #a3b5aa;
-    --ink-3: #788a7f;
-    --ink-inverse: #06120c;
+    --ink: #e8ebe9;
+    --ink-2: #a3aaa6;
+    --ink-3: #7f8783;
+    --ink-inverse: #0d100e;
 
-    --line: rgba(190, 226, 208, 0.13);
-    --line-soft: rgba(190, 226, 208, 0.07);
-    --line-strong: rgba(190, 226, 208, 0.22);
+    --line: rgba(226, 236, 230, 0.11);
+    --line-soft: rgba(226, 236, 230, 0.06);
+    --line-strong: rgba(226, 236, 230, 0.2);
 
-    --brand: #2ec394;
-    --brand-deep: #17ab7d;
-    --brand-bright: #45d6a7;
-    --brand-ink: #7fe3bd;
-    --brand-soft: rgba(46, 195, 148, 0.16);
-    --brand-soft-2: rgba(46, 195, 148, 0.1);
-    --brand-ring: rgba(46, 195, 148, 0.3);
+    --brand: #3aa87b;
+    --brand-ink: #7fd0ab;
+    --brand-soft: rgba(58, 168, 123, 0.15);
+    --brand-soft-2: rgba(58, 168, 123, 0.09);
+    --brand-ring: rgba(58, 168, 123, 0.26);
 
-    --warn: #e0b063;
-    --warn-soft: rgba(224, 176, 99, 0.16);
-    --info: #7fb6e0;
-    --info-soft: rgba(127, 182, 224, 0.16);
-    --danger: #ef8f70;
-    --danger-soft: rgba(239, 143, 112, 0.16);
-    --success: #2ec394;
-    --success-soft: rgba(46, 195, 148, 0.16);
+    /* 深色下实心块压暗一档，避免荧光绿配白字对比度不足 */
+    --brand-fill: #1f7a5a;
+    --brand-fill-active: #196449;
+    --brand-fill-ink: #ffffff;
 
-    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 10px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.32), 0 10px 24px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.35), 0 20px 44px rgba(0, 0, 0, 0.5);
-    --shadow-brand: 0 6px 18px rgba(0, 0, 0, 0.45);
+    --warn: #d3a658;
+    --warn-soft: rgba(211, 166, 88, 0.15);
+    --info: #7aabd4;
+    --info-soft: rgba(122, 171, 212, 0.15);
+    --danger: #e08a6e;
+    --danger-soft: rgba(224, 138, 110, 0.15);
+    --success: #3aa87b;
+    --success-soft: rgba(58, 168, 123, 0.15);
+
+    --shadow-xs: 0 1px 1px rgba(0, 0, 0, 0.24);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.36);
+    --shadow-lg: 0 10px 28px rgba(0, 0, 0, 0.5);
+    --shadow-brand: 0 1px 2px rgba(0, 0, 0, 0.3);
   }
 }

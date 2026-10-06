@@ -20,7 +20,7 @@
 .job-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
   list-style: none;
   margin: 0;
 }
@@ -28,57 +28,54 @@
 .job {
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
+  gap: 12px;
   width: 100%;
-  padding: var(--sp-4);
+  padding: 12px var(--sp-3);
   border-radius: var(--r-xl);
   background: var(--paper);
   border: 1px solid var(--line);
-  box-shadow: var(--shadow-xs);
   text-align: left;
   transition:
-    transform var(--t-fast) var(--ease-out),
-    box-shadow var(--t-fast) var(--ease-out);
+    border-color var(--t-fast) var(--ease-out),
+    background-color var(--t-fast) var(--ease-out);
 }
 .job:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
+  border-color: var(--line-strong);
 }
 .job:active {
-  transform: scale(0.99);
+  background: var(--paper-sunken);
 }
 
+/* 状态色块：浅底色 + 语义色图标，替代饱和渐变块 */
 .job__thumb {
   display: grid;
   place-items: center;
   flex: none;
-  width: 46px;
-  height: 46px;
-  border-radius: 15px;
-  color: #fff;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-md);
 }
 .job__thumb--ready {
-  background: linear-gradient(135deg, var(--brand-bright) 0%, var(--brand-deep) 100%);
-  box-shadow: 0 8px 18px rgba(9, 122, 82, 0.24);
+  background: var(--brand-soft);
+  color: var(--brand);
 }
 .job__thumb--queued {
-  background: linear-gradient(135deg, #eec36f 0%, #c2902f 100%);
-  box-shadow: 0 8px 18px rgba(194, 144, 47, 0.22);
+  background: var(--warn-soft);
+  color: var(--warn);
 }
 .job__thumb--running {
-  background: linear-gradient(135deg, #6aa8dd 0%, #35719f 100%);
-  box-shadow: 0 8px 18px rgba(53, 113, 159, 0.22);
-  animation: dotPulse 1.6s ease-in-out infinite;
+  background: var(--info-soft);
+  color: var(--info);
 }
 .job__thumb--failed {
-  background: linear-gradient(135deg, #e3977b 0%, #b04a2c 100%);
-  box-shadow: 0 8px 18px rgba(176, 74, 44, 0.2);
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
 .job__main {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   flex: 1;
   min-width: 0;
 }
@@ -93,8 +90,8 @@
 .job__title {
   flex: 1;
   min-width: 0;
-  font-size: 15px;
-  font-weight: 620;
+  font-size: 14.5px;
+  font-weight: 550;
   line-height: 1.45;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -107,8 +104,8 @@
 }
 
 .job__source {
-  color: var(--ink-2);
-  font-size: 12.5px;
+  color: var(--ink-3);
+  font-size: 12px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

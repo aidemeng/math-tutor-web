@@ -261,7 +261,7 @@ export function ChatPage() {
         {analysis ? (
           <>
             <div className="sheet__meta">
-              <span className="pill">{analysis.source}</span>
+              <span className="pill pill--plain">{analysis.source}</span>
               <span className="pill pill--plain">{analysis.kind}</span>
               <span className="pill pill--plain">{analysis.level}</span>
             </div>

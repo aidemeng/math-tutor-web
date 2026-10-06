@@ -56,7 +56,7 @@ export function QuestionCard({ questionKey, onAnalysis, onDerive, onVideo, disab
   return (
     <article className={['qcard', isCurrent ? 'qcard--current' : ''].join(' ')}>
       <header className="qcard__head">
-        <span className="pill qcard__source">{question.source}</span>
+        <span className="pill pill--plain qcard__source">{question.source}</span>
         <span className={['pill', needsReview ? 'pill--warn' : 'pill--plain'].join(' ')}>
           {needsReview ? '待复核' : '已复核'}
         </span>

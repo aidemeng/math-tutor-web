@@ -5,21 +5,18 @@
 .qcard {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
-  padding: var(--sp-5);
+  gap: 10px;
+  padding: var(--sp-4);
   border-radius: var(--r-xl);
   background: var(--paper);
   border: 1px solid var(--line);
-  box-shadow: var(--shadow-sm);
   transition:
     border-color var(--t-base) var(--ease-out),
     box-shadow var(--t-base) var(--ease-out);
 }
 .qcard--current {
-  border-color: transparent;
-  box-shadow:
-    var(--shadow-md),
-    0 0 0 2px var(--brand-ring);
+  border-color: var(--brand-ring);
+  box-shadow: 0 0 0 1px var(--brand-ring);
 }
 
 .qcard--loading {
@@ -33,56 +30,52 @@
   gap: var(--sp-2);
 }
 .qcard__source {
-  max-width: 74%;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .qcard__title {
   margin: 0;
-  font-size: 17.5px;
-  font-weight: 680;
-  line-height: 1.42;
-  letter-spacing: -0.3px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: -0.1px;
 }
 
 .qcard__tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: -4px;
+  gap: 5px;
+  margin-top: -3px;
 }
 
 .qcard__stem {
-  font-size: 15px;
+  font-size: 14.5px;
+  border-top: 1px solid var(--line-soft);
+  padding-top: 10px;
 }
 
 .qcard__derive {
   display: flex;
-  gap: 4px;
-  padding: 4px;
-  border-radius: var(--r-lg);
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--r-md);
   background: var(--paper-sunken);
 }
 .qcard__derive-btn {
   flex: 1;
-  padding: 9px 4px;
-  border-radius: var(--r-md);
-  font-size: 13.5px;
-  font-weight: 570;
+  padding: 7px 4px;
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  font-weight: 500;
   color: var(--ink-2);
   transition:
     background-color var(--t-fast) var(--ease-out),
-    color var(--t-fast) var(--ease-out),
-    transform var(--t-fast) var(--ease-out);
+    color var(--t-fast) var(--ease-out);
 }
 .qcard__derive-btn:hover:not(:disabled) {
   background: var(--paper);
-  color: var(--brand-ink);
-  box-shadow: var(--shadow-xs);
-}
-.qcard__derive-btn:active:not(:disabled) {
-  transform: scale(0.97);
+  color: var(--ink);
 }
 .qcard__derive-btn:disabled {
   opacity: 0.5;
@@ -91,7 +84,7 @@
 .qcard__footer {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 .qcard__video {
   width: 100%;
@@ -101,9 +94,10 @@
   background: none;
   border: 0;
   color: var(--ink-2);
-  font-weight: 560;
-  min-height: 40px;
+  font-weight: 500;
+  min-height: 36px;
+  box-shadow: none;
 }
 .qcard__analysis:hover {
-  color: var(--brand-ink);
+  color: var(--brand);
 }

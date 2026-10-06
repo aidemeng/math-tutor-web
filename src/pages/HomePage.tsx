@@ -51,10 +51,6 @@ export function HomePage() {
   return (
     <main className="page page--tabbed home">
       <section className="home__hero">
-        <p className="home__eyebrow">
-          <Icon name="sparkle" size={14} />
-          备课助手
-        </p>
         <h2 className="home__headline">今天准备讲哪道题？</h2>
         <p className="home__sub">输入题干或上传题目照片，一起备课</p>
       </section>

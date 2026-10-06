@@ -6,55 +6,47 @@
   display: grid;
   place-items: center;
   flex: none;
-  width: 30px;
-  height: 30px;
-  margin-left: 2px;
-  border-radius: 10px;
-  color: #fff;
-  background: linear-gradient(135deg, var(--brand-bright) 0%, var(--brand-deep) 100%);
-  box-shadow: 0 4px 12px rgba(9, 122, 82, 0.28);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-md);
+  color: var(--brand);
+  background: var(--brand-soft);
 }
 
 .appbar__actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   flex: none;
 }
 
 .credits-pill {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  height: 30px;
-  padding: 0 11px;
-  border-radius: var(--r-pill);
-  background: var(--paper);
-  border: 1px solid var(--line);
-  color: var(--brand-ink);
-  font-size: 13px;
-  font-weight: 620;
+  gap: 4px;
+  height: 28px;
+  padding: 0 9px;
+  border-radius: var(--r-md);
+  background: var(--paper-sunken);
+  color: var(--ink-2);
+  font-size: 12.5px;
+  font-weight: 550;
   font-variant-numeric: tabular-nums;
-  box-shadow: var(--shadow-xs);
 }
 
 /* ---------- 底部标签栏 ---------- */
 
 .tabbar__item .tabbar__icon {
-  position: relative;
-  border-radius: 12px;
-  transition:
-    background-color var(--t-base) var(--ease-out),
-    transform var(--t-base) var(--ease-spring);
+  border-radius: var(--r-md);
+  transition: background-color var(--t-base) var(--ease-out);
 }
 
 .tabbar__item[aria-current='page'] .tabbar__icon {
   background: var(--brand-soft);
-  transform: translateY(-1px);
 }
 
 .tabbar__item:active .tabbar__icon {
-  transform: scale(0.92);
+  background: var(--paper-sunken);
 }
 
 /* ---------- 通用页面头部 ---------- */
@@ -69,14 +61,14 @@
 
 .page-head__title {
   margin: 0;
-  font-size: 22px;
-  font-weight: 720;
-  letter-spacing: -0.5px;
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.3px;
   line-height: 1.3;
 }
 
 .page-head__sub {
-  margin: 3px 0 0;
+  margin: 2px 0 0;
   color: var(--ink-3);
-  font-size: 13px;
+  font-size: 12.5px;
 }

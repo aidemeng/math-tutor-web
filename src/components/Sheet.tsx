@@ -64,7 +64,7 @@ export function Sheet({ open, title, onClose, children, footer }: SheetProps) {
         <div className="sheet__grabber" />
         <header className="sheet__header">
           <h2 className="sheet__title">{title}</h2>
-          <button type="button" className="iconbtn" onClick={onClose} aria-label="关闭">
+          <button type="button" className="iconbtn iconbtn--plain" onClick={onClose} aria-label="关闭">
             <Icon name="close" size={18} />
           </button>
         </header>

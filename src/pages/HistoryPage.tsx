@@ -49,7 +49,7 @@ export function HistoryPage() {
       {refreshing && !groups.length ? (
         <div className="history__skeleton">
           {[0, 1, 2, 3].map((key) => (
-            <div key={key} className="skeleton" style={{ height: 54, borderRadius: 18 }} />
+            <div key={key} className="skeleton" style={{ height: 52, borderRadius: 10 }} />
           ))}
         </div>
       ) : null}
