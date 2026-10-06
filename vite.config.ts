@@ -13,11 +13,13 @@ export default defineConfig(({ mode }) => {
   const proxyTarget = env.VITE_DEV_PROXY_TARGET || 'http://127.0.0.1:8787';
 
   return {
+    // Formal browser sessions are same-origin HttpOnly cookies.
+    define: {'import.meta.env.VITE_API_BASE_URL': JSON.stringify(mode==='production'?'':env.VITE_API_BASE_URL||'')},
     server: {
       host: '127.0.0.1',
       port: 5173,
       proxy: {
-        '/v1': { target: proxyTarget, changeOrigin: true },
+        '/v1': { target: proxyTarget, changeOrigin: false },
         '/internal': { target: proxyTarget, changeOrigin: true },
       },
     },
@@ -50,27 +52,13 @@ export default defineConfig(({ mode }) => {
           ],
         },
         workbox: {
+          importScripts: ['/clear-private-cache.js'],
           globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
           navigateFallback: '/index.html',
           navigateFallbackDenylist: [/^\/v1\//, /^\/internal\//],
           cleanupOutdatedCaches: true,
-          runtimeCaching: [
-            {
-              // 题目配图、视频、照片：私有内容，网络优先，命中后短期缓存。
-              urlPattern: ({ url, request }) =>
-                request.method === 'GET' &&
-                (url.pathname.startsWith('/v1/questions/') ||
-                  url.pathname.startsWith('/v1/video-jobs/') ||
-                  url.pathname.startsWith('/v1/conversations/')),
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'tutor-media',
-                networkTimeoutSeconds: 20,
-                expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 3 },
-                cacheableResponse: { statuses: [200] },
-              },
-            },
-          ],
+          // Private API responses remain network-only across account changes.
+          runtimeCaching: [],
         },
         devOptions: { enabled: false },
       }),

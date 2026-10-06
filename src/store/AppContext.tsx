@@ -30,14 +30,13 @@ interface AppValue {
   session: StoredSession | null;
   client: TutorClient;
   store: TeacherStore | null;
-  login(name: string, secret: string): Promise<void>;
+  login(username: string, password: string, name?: string): Promise<void>;
   logout(): Promise<void>;
   retry(): void;
 }
 
 const AppContext = createContext<AppValue | null>(null);
 
-const DEV_SECRET = String(import.meta.env.VITE_DEV_LOGIN_SECRET || '');
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const clientRef = useRef<TutorClient | null>(null);
@@ -49,7 +48,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [attempt, setAttempt] = useState(0);
 
   if (!clientRef.current) {
-    clientRef.current = createClient({ getToken: () => tokenRef.current });
+    clientRef.current = createClient({ getToken: () => tokenRef.current==='cookie'?null:tokenRef.current });
   }
   const client = clientRef.current;
 
@@ -144,8 +143,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [status]);
 
   const login = useCallback(
-    async (name: string, secret: string) => {
-      const result = await client.loginDev(name.trim(), secret.trim() || DEV_SECRET);
+    async (username: string, password: string, name?: string) => {
+      const result = name===undefined?await client.loginPassword(username.trim(),password):await client.register(username.trim(),password,name.trim());
       const stored = writeSession(result);
       tokenRef.current = stored.token;
       setSession(stored);

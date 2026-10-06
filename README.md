@@ -46,31 +46,11 @@ scripts/
   mock-api.mjs  本地假后端，前端可脱离 Cloudflare 独立联调
 ```
 
-## 后端接口
+## 登录与 API
 
-沿用 `math-tutor-service`，未做改动：
+正式网页支持教师自行注册账号、密码和称呼，`POST /v1/auth/register` 注册后直接进入备课，`POST /v1/auth/password` 登录。Cookie 为 HttpOnly，浏览器不持有可读取的会话令牌；本地只保存登录状态、到期时间和账号资料。与小程序暂时使用独立账号，不提供自动找回密码。
 
-- 登录：`POST /v1/auth/dev`（仅 `APP_ENV=development`，需 `X-Dev-Secret`）
-- 会话：`GET/POST /v1/conversations`、`GET /v1/conversations/:id`
-- 流式对话：`POST /v1/conversations/:id/messages` → SSE
-- 题目：`GET /v1/questions/:id`、`/similar`、`/assets/:index`（配图需鉴权）
-- 照片：`POST /v1/conversations/:id/photos`（`{mimeType,data(base64)}`，≤4 MiB）
-- 视频：`GET/POST /v1/video-jobs`（提交需 `Idempotency-Key`）、`GET /v1/video-jobs/:id/video`
-- 额度：`GET /v1/credits`
-
-服务端已移除网页登录（迁移 `0006_remove_web.sql`），因此 Web 端目前接的是开发登录。鉴权集中在 `src/auth/session.ts` 与 `src/store/AppContext.tsx`：接入正式网页登录时，只需替换 `login()` 的调用与令牌存取，其余业务代码不用改。
-
-## 环境变量
-
-复制 `.env.example` 为 `.env.local`：
-
-| 变量 | 说明 |
-| --- | --- |
-| `VITE_API_BASE_URL` | API 地址。留空 = 同源相对路径（推荐配合反向代理）。开发态由 Vite 代理，无需设置 |
-| `VITE_DEV_PROXY_TARGET` | 开发态 `/v1` 的转发目标，默认 `http://127.0.0.1:8787` |
-| `VITE_DEV_LOGIN_SECRET` | 本地联调用的开发登录密钥，对应后端 `.dev.vars` 的 `DEV_LOGIN_SECRET`。**仅 development 有效，不要写进生产构建** |
-
-浏览器跨域不会带上自定义请求头，所以开发态务必走 Vite 代理，而不是把 `VITE_API_BASE_URL` 指向另一个端口。
+其余会话、题目、照片、视频和额度接口沿用 `math-tutor-service`。Web 与 API 必须同源；生产构建固定相对 API 路径。开发态通过 Vite 代理到 `VITE_DEV_PROXY_TARGET`（默认 `http://127.0.0.1:8787`）。不再使用开发登录密钥。
 
 ## 本地联调
 
@@ -96,7 +76,7 @@ VITE_DEV_PROXY_TARGET=http://127.0.0.1:8788 npm run dev
 ## PWA
 
 - `vite-plugin-pwa` 生成 `manifest.webmanifest` 与 Service Worker，`autoUpdate` 自动接管新版本。
-- 静态资源预缓存；题目配图、视频、照片走 `NetworkFirst` 并只缓存 3 天，避免私有内容长期驻留。
+- 仅预缓存公共静态资源，所有私有 API 响应走网络；新 Service Worker 激活时删除旧 `tutor-media` 缓存。
 - 顶栏在浏览器支持时出现「安装到桌面」按钮；已安装或用户关闭过则隐藏。
 - `/v1/*` 不参与路由回退，避免接口 404 被误当成页面请求。
 
@@ -110,11 +90,9 @@ npm run typecheck  # 可选；构建本身只做转译不做类型检查
 
 ## 上线
 
-1. `npm run build`，把 `dist/` 交给静态托管（Cloudflare Pages / Nginx / 对象存储均可）。
-2. 反向代理 `/v1` 到 `math-tutor-service`，保持同源，无需给 Worker 加 CORS。
-3. 必须 HTTPS：PWA 安装、Service Worker、剪贴板 API 都要求安全上下文。
-4. `VITE_API_BASE_URL` 留空即可；若要指向独立域名，需在后端补 `Access-Control-Allow-Origin` 与预检响应头（后端目前未实现 CORS）。
-5. 服务端把 `APP_ENV` 置为 `production` 后 `/v1/auth/dev` 会返回 404 —— 上线前必须接入正式网页登录。
+服务仓库的生产配置使用 Cloudflare Worker Static Assets 读取本仓库的 `dist/`，同时发布网页和 API。部署到 `https://mathprep.cn`；既有小程序 API 域名继续为 `https://api.mathprep.cn`。
+
+先在本仓库执行 `npm run typecheck && npm run build`，再由服务仓库完成 D1 备份、远程迁移和 `npm run deploy`。生产需要迁移 `0008_password_accounts.sql`；网页构建不使用 `.dev.vars` 或开发密钥。注册和 Cookie 写请求使用同源 Origin。
 
 ## 验证
 
@@ -123,11 +101,11 @@ npm run typecheck   # tsc --noEmit，0 错误
 npm run build       # 产出 dist/，含 sw.js 与 manifest.webmanifest
 ```
 
-界面走查用无头 Chrome 通过 CDP 驱动（见 `docs/screens/`），覆盖：开发登录 → 首页 → 打开预置会话（题卡与公式）→ 解析抽屉 → 发起流式对话（打字机 + 状态文案）→ 视频列表 → 任务详情 → 对话记录 → 深色模式。视口 390×844 @2x。全程 `window.onerror`、`unhandledrejection`、控制台 error 均为空。
+界面走查用无头 Chrome 通过 CDP 驱动（见 `docs/screens/`），覆盖：账号密码注册/登录 → 首页 → 打开预置会话（题卡与公式）→ 解析抽屉 → 发起流式对话（打字机 + 状态文案）→ 视频列表 → 任务详情 → 对话记录 → 深色模式。视口 390×844 @2x。全程 `window.onerror`、`unhandledrejection`、控制台 error 均为空。
 
 ## 已知边界
 
-- 未实现微信 code 登录（浏览器拿不到 `wx.login` 的 code），也暂未实现正式网页登录，因此当前只适合开发与内测。
+- 网页账号与小程序账号暂时独立；未接入微信扫码登录或自动找回密码。
 - 后端未实现 CORS，跨域部署需要自行加代理或改后端。
 - 视频「保存到相册」在 Web 上是下载文件，不是写入系统相册。
 - 数学渲染的公式错误会以红色小方块提示原文，不会中断整段解析。

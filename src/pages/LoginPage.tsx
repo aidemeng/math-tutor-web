@@ -1,5 +1,4 @@
 import { useState, type FormEvent } from 'react';
-import { API_BASE_URL } from '../api/client';
 import { friendlyError } from '../api/errors';
 import { Icon } from '../components/Icon';
 import { useApp } from '../store/AppContext';
@@ -14,20 +13,24 @@ const PREVIEW_ITEMS = [
 export function LoginPage() {
   const { login, error } = useApp();
   const [name, setName] = useState('');
-  const [secret, setSecret] = useState(String(import.meta.env.VITE_DEV_LOGIN_SECRET || ''));
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [registering, setRegistering] = useState(false);
+  const [confirmation, setConfirmation] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (!name.trim()) {
-      setMessage('请先填写老师称呼');
+    if (!username.trim() || !password || (registering && !name.trim())) {
+      setMessage('请填写账号、密码和必要的注册信息');
       return;
     }
+    if(registering && password!==confirmation){setMessage('两次输入的密码不一致');return;}
     setBusy(true);
     setMessage(null);
     try {
-      await login(name, secret);
+      await login(username, password, registering?name:undefined);
     } catch (caught) {
       setMessage(friendlyError(caught));
       setBusy(false);
@@ -45,35 +48,20 @@ export function LoginPage() {
       </div>
 
       <form className="login__card" onSubmit={submit}>
-        <label className="field-label" htmlFor="teacher-name">
-          老师称呼
-        </label>
-        <input
-          id="teacher-name"
-          className="field"
-          value={name}
-          maxLength={60}
-          autoComplete="nickname"
-          placeholder="例如：高二数学 · 王老师"
-          onChange={(event) => setName(event.target.value)}
-        />
-
-        <label className="field-label" htmlFor="dev-secret" style={{ marginTop: 18 }}>
-          开发登录密钥
-        </label>
-        <input
-          id="dev-secret"
-          className="field"
-          type="password"
-          value={secret}
-          autoComplete="off"
-          placeholder="后端 .dev.vars 中的 DEV_LOGIN_SECRET"
-          onChange={(event) => setSecret(event.target.value)}
-        />
-        <p className="field-hint">
-          当前后端只开放微信小程序登录与开发登录。开发登录仅在服务端 <code>APP_ENV=development</code>{' '}
-          时可用，正式环境请由运营方接入网页登录。
-        </p>
+        <h2 className="login__form-title">{registering?'注册教师账号':'欢迎回来'}</h2>
+        <label className="field-label" htmlFor="username">登录账号</label>
+        <input id="username" className="field" value={username} required minLength={4} maxLength={32} pattern="[a-zA-Z0-9][a-zA-Z0-9_.-]*" autoComplete="username" autoCapitalize="none" spellCheck={false} placeholder="4–32 位字母、数字、下划线或点" onChange={event=>setUsername(event.target.value)} />
+        {registering?<>
+          <label className="field-label" htmlFor="teacher-name" style={{marginTop:18}}>老师称呼</label>
+          <input id="teacher-name" className="field" value={name} required maxLength={60} autoComplete="nickname" placeholder="例如：王老师" onChange={event=>setName(event.target.value)} />
+        </>:null}
+        <label className="field-label" htmlFor="password" style={{marginTop:18}}>密码</label>
+        <input id="password" className="field" type="password" value={password} required minLength={10} maxLength={128} autoComplete={registering?'new-password':'current-password'} placeholder="至少 10 个字符" onChange={event=>setPassword(event.target.value)} />
+        {registering?<>
+          <label className="field-label" htmlFor="password-confirm" style={{marginTop:18}}>确认密码</label>
+          <input id="password-confirm" className="field" type="password" value={confirmation} required minLength={10} maxLength={128} autoComplete="new-password" placeholder="再次输入密码" onChange={event=>setConfirmation(event.target.value)} />
+        </>:null}
+        {registering?<p className="field-hint">请记住账号和密码，下次登录后可继续查看备课记录和视频。</p>:null}
 
         {message ? (
           <div className="notice notice--danger login__notice" role="alert">
@@ -89,12 +77,10 @@ export function LoginPage() {
         ) : null}
 
         <button type="submit" className="btn btn--primary btn--block login__submit" disabled={busy}>
-          {busy ? '正在登录…' : '进入备课'}
+          {busy ? (registering?'正在注册…':'正在登录…') : (registering?'注册并开始备课':'登录并进入备课')}
         </button>
 
-        <p className="login__endpoint">
-          服务地址：<code>{API_BASE_URL || '同源（/v1 由当前站点代理）'}</code>
-        </p>
+        <button type="button" className="login__switch" disabled={busy} onClick={()=>{setRegistering(value=>!value);setMessage(null);setPassword('');setConfirmation('');}}>{registering?'已有账号？去登录':'还没有账号？免费注册'}</button>
       </form>
 
       <ul className="login__features">

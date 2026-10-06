@@ -116,3 +116,6 @@
   font-size: 12.5px;
   line-height: 1.5;
 }
+
+.login__form-title { margin: 0 0 20px; font-size: 18px; }
+.login__switch { display:block; margin:18px auto 0; color:var(--brand-ink); font-size:14px; background:none; border:0; cursor:pointer; }
