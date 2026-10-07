@@ -84,6 +84,8 @@ export function createTeacherStore(options: {
   let activeRequest: { done: Promise<void>; cancel: () => void } | null = null;
   let loadingJobs: Promise<void> | null = null;
   let selection = 0;
+  let loadingConversation = false;
+  let jobsVersion = 0;
   let disposed = false;
   let revision = 0;
 
@@ -157,61 +159,72 @@ export function createTeacherStore(options: {
   }
 
   async function openConversation(id: string): Promise<void> {
-    if (state.busy) throw stateError('MESSAGE_IN_PROGRESS');
+    if (state.busy && !loadingConversation) throw stateError('MESSAGE_IN_PROGRESS');
     const token = ++selection;
-    const value = await client.getConversation(id);
-    if (token !== selection || disposed) return;
-
-    const turns: Turn[] = [];
-    for (const message of value.messages) {
-      if (message.role === 'user') {
-        let prompt = message.content;
-        let photoId: string | undefined;
-        try {
-          const saved = JSON.parse(message.content) as {
-            type?: string;
-            text?: string;
-            photoId?: string;
-          };
-          if (saved.type === 'teacher_input' && typeof saved.text === 'string' && typeof saved.photoId === 'string') {
-            prompt = saved.text || '请识别这道题并检索匹配真题。';
-            photoId = saved.photoId;
-          }
-        } catch {
-          /* 纯文本输入 */
-        }
-        turns.push({ prompt: displayPrompt(prompt), photoId, reply: '', questions: [], error: null });
-      } else if (message.role === 'assistant') {
-        const turn = turns[turns.length - 1];
-        if (!turn) continue;
-        for (const line of message.content.split('\n').filter(Boolean)) {
-          try {
-            applyEvent(turn, JSON.parse(line) as AgentEvent);
-          } catch {
-            turn.error = 'INVALID_SAVED_MESSAGE';
-          }
-        }
-      }
-    }
-
-    for (const turn of turns) {
-      if (turn.questions.length && turn.reply.length > 160) {
-        turn.reply = '题目已找到，解析和后续操作见题卡。';
-      }
-    }
-
-    state.activeId = id;
-    state.turns = turns;
-    state.currentQuestion = value.context?.currentQuestion ?? null;
-    if (!state.currentQuestion) {
-      outer: for (const turn of turns) {
-        for (const item of turn.questions) {
-          state.currentQuestion = { id: item.id, bankVersion: item.bankVersion };
-          break outer;
-        }
-      }
-    }
+    loadingConversation = true;
+    state.busy = true;
     emit();
+    try {
+      const value = await client.getConversation(id);
+      if (token !== selection || disposed) return;
+
+      const turns: Turn[] = [];
+      for (const message of value.messages) {
+        if (message.role === 'user') {
+          let prompt = message.content;
+          let photoId: string | undefined;
+          try {
+            const saved = JSON.parse(message.content) as {
+              type?: string;
+              text?: string;
+              photoId?: string;
+            };
+            if (saved.type === 'teacher_input' && typeof saved.text === 'string' && typeof saved.photoId === 'string') {
+              prompt = saved.text || '请识别这道题并检索匹配真题。';
+              photoId = saved.photoId;
+            }
+          } catch {
+            /* 纯文本输入 */
+          }
+          turns.push({ prompt: displayPrompt(prompt), photoId, reply: '', questions: [], error: null });
+        } else if (message.role === 'assistant') {
+          const turn = turns[turns.length - 1];
+          if (!turn) continue;
+          for (const line of message.content.split('\n').filter(Boolean)) {
+            try {
+              applyEvent(turn, JSON.parse(line) as AgentEvent);
+            } catch {
+              turn.error = 'INVALID_SAVED_MESSAGE';
+            }
+          }
+        }
+      }
+
+      for (const turn of turns) {
+        if (turn.questions.length && turn.reply.length > 160) {
+          turn.reply = '题目已找到，解析和后续操作见题卡。';
+        }
+      }
+
+      state.activeId = id;
+      state.turns = turns;
+      state.currentQuestion = value.context?.currentQuestion ?? null;
+      if (!state.currentQuestion) {
+        outer: for (const turn of turns) {
+          for (const item of turn.questions) {
+            state.currentQuestion = { id: item.id, bankVersion: item.bankVersion };
+            break outer;
+          }
+        }
+      }
+      emit();
+    } finally {
+      if (token === selection && !disposed) {
+        loadingConversation = false;
+        state.busy = false;
+        emit();
+      }
+    }
   }
 
   async function send(text: string, settings: SendSettings = {}): Promise<void> {
@@ -325,10 +338,18 @@ export function createTeacherStore(options: {
   async function refreshJobs(): Promise<void> {
     if (loadingJobs) return loadingJobs;
     loadingJobs = (async () => {
-      const [jobs, credits] = await Promise.all([client.listVideoJobs(), client.credits()]);
-      state.jobs = jobs.jobs;
-      state.credits = credits.available;
-      emit();
+      // A submission can finish while an older list/balance request is in flight.
+      // Read both again before publishing so neither jobs nor credits regress.
+      while (!disposed) {
+        const version = jobsVersion;
+        const [jobs, credits] = await Promise.all([client.listVideoJobs(), client.credits()]);
+        if (disposed) return;
+        if (version !== jobsVersion) continue;
+        state.jobs = jobs.jobs;
+        state.credits = credits.available;
+        emit();
+        return;
+      }
     })();
     try {
       await loadingJobs;
@@ -347,10 +368,12 @@ export function createTeacherStore(options: {
     const fingerprint = JSON.stringify({ intent, ...input });
     const key = rememberKey(fingerprint);
     const result = await client.createVideoJob(input, key);
+    jobsVersion += 1;
     const index = state.jobs.findIndex((job) => job.id === result.job.id);
     if (index < 0) state.jobs.unshift(result.job);
     else state.jobs[index] = result.job;
     emit();
+    void refreshJobs().catch(() => {});
     return result.job;
   }
 

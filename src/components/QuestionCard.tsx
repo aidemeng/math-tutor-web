@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { questionView } from '../lib/questionView';
 import { useApp, useStoreRevision } from '../store/AppContext';
+import {QuestionDiagrams} from './QuestionDiagram';
 import { Markdown } from './Markdown';
 import { Icon } from './Icon';
 import '../styles/card.css';
@@ -73,6 +74,8 @@ export function QuestionCard({ questionKey, onAnalysis, onDerive, onVideo, disab
       <div className="qcard__stem">
         <Markdown value={question.stem} questionKey={questionKey} />
       </div>
+
+      <QuestionDiagrams diagrams={raw?.diagrams} />
 
       <div className="qcard__derive" role="group" aria-label="派生新题">
         {DERIVE_ACTIONS.map((action) => (

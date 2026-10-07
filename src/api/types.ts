@@ -1,6 +1,8 @@
 /** 后端契约类型 —— 与 math-tutor-service 的 API 返回保持一致。 */
 
+import type {Diagram} from '../lib/questionDiagram';
 export interface Question {
+  diagrams?: Diagram[];
   id: string;
   bankVersion: string;
   title?: string;

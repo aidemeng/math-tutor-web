@@ -113,12 +113,13 @@ export function createClient(options: { getToken: () => string | null }): TutorC
     return body as T;
   }
 
-  async function binary(path: string, expected: RegExp): Promise<Blob> {
+  async function binary(path: string, expected: RegExp, scoped = false): Promise<Blob> {
     const token = getToken();
     let response: Response;
     try {
-      response = await fetch(API_BASE_URL + path, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      response = await fetch(scoped ? path : API_BASE_URL + path, {
+        credentials: scoped ? 'omit' : 'same-origin',
+        headers: !scoped && token ? { Authorization: `Bearer ${token}` } : {},
       });
     } catch {
       throw new ApiError('MEDIA_DOWNLOAD_FAILED', 0);
@@ -256,7 +257,9 @@ export function createClient(options: { getToken: () => string | null }): TutorC
     listVideoJobs: () => request('/v1/video-jobs'),
     getVideoJob: (id) => request(`/v1/video-jobs/${encodeURIComponent(id)}`),
     videoPlayback: (id) => request(`/v1/video-jobs/${encodeURIComponent(id)}/playback`, {method: 'POST', signal: AbortSignal.timeout(15000)}),
-    fetchVideo: (id) =>
-      binary(`/v1/video-jobs/${encodeURIComponent(id)}/video`, /^video\/mp4/i),
+    fetchVideo: async (id) => {
+      const playback = await request<{url: string}>(`/v1/video-jobs/${encodeURIComponent(id)}/playback`, {method: 'POST', signal: AbortSignal.timeout(15000)});
+      return binary(playback.url, /^video\/mp4/i, true);
+    },
   };
 }

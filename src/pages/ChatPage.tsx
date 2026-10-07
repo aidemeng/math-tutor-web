@@ -5,6 +5,7 @@ import { AgentMessage } from '../components/AgentMessage';
 import { ChatComposer } from '../components/ChatComposer';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Icon } from '../components/Icon';
+import {QuestionDiagrams} from '../components/QuestionDiagram';
 import { Markdown } from '../components/Markdown';
 import { QuestionCard, type DeriveKind } from '../components/QuestionCard';
 import { Sheet } from '../components/Sheet';
@@ -28,24 +29,37 @@ export function ChatPage() {
   const [videoKey, setVideoKey] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [conversationError, setConversationError] = useState('');
 
   const openedRef = useRef<string | null>(null);
   const followRef = useRef(true);
   const hydratedRef = useRef<string | null>(null);
   const mainRef = useRef<HTMLElement>(null);
 
-  const turns = store?.state.turns ?? [];
-  const busy = store?.state.busy ?? false;
   const activeId = store?.state.activeId ?? null;
+  const waitingForConversation = !!id && activeId !== id;
+  const turns = waitingForConversation ? [] : store?.state.turns ?? [];
+  const storeBusy = store?.state.busy ?? false;
+  const busy = storeBusy || waitingForConversation;
   const pendingVideos =
     store?.state.jobs.filter((job) => job.status === 'queued' || job.status === 'running').length ?? 0;
 
-  // URL 里带会话 id 时打开对应对话（列表点进来）
+  // A changed route gets its own load attempt. Failed loads wait for explicit retry.
   useEffect(() => {
-    if (!store || !id || openedRef.current === id) return;
-    openedRef.current = id;
-    store.openConversation(id).catch((caught) => toast(friendlyError(caught)));
+    openedRef.current = null;
+    setConversationError('');
   }, [id, store]);
+
+  // Wait for an existing reply/history request, then load the conversation in the URL.
+  useEffect(() => {
+    if (!store || !id || storeBusy || conversationError || openedRef.current === id) return;
+    openedRef.current = id;
+    store.openConversation(id).catch((caught) => {
+      if (openedRef.current !== id) return;
+      openedRef.current = null;
+      setConversationError(friendlyError(caught));
+    });
+  }, [id, store, storeBusy, conversationError]);
 
   // 历史对话里的照片需要带鉴权重新取回
   useEffect(() => {
@@ -155,6 +169,12 @@ export function ChatPage() {
   return (
     <>
       <main className="page page--composer chat" ref={mainRef}>
+        {conversationError ? (
+          <div className="notice notice--danger" role="alert">
+            <span>{conversationError}</span>
+            <button type="button" className="btn btn--quiet" onClick={() => setConversationError('')}>重新加载对话</button>
+          </div>
+        ) : waitingForConversation ? <p className="muted">正在加载对话…</p> : null}
         {pendingVideos > 0 ? (
           <button type="button" className="chat__notice" onClick={() => navigate('/videos')}>
             <span className="chat__notice-text">
@@ -266,6 +286,7 @@ export function ChatPage() {
               <span className="pill pill--plain">{analysis.level}</span>
             </div>
             <h3 className="sheet__heading">{analysis.title}</h3>
+            <QuestionDiagrams diagrams={analysis.raw.diagrams} />
             <Markdown
               value={analysis.explanation || analysis.answer || '暂无解析'}
               questionKey={analysisKey ?? undefined}
