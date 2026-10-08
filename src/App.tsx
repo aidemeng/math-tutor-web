@@ -1,3 +1,4 @@
+import { BrandLogo } from './components/BrandLogo';
 import { useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { Icon } from './components/Icon';
@@ -26,7 +27,7 @@ function Splash() {
   return (
     <div className="splash">
       <span className="splash__logo">
-        <Icon name="sparkle" size={24} />
+        <BrandLogo size={48} />
       </span>
       <p className="splash__text">正在准备备课环境…</p>
     </div>

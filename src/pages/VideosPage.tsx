@@ -87,9 +87,9 @@ function JobRow({ job, onOpen }: { job: VideoJob; onOpen(): void }) {
         {job.status === 'ready' ? (
           <Icon name="play" size={20} />
         ) : job.status === 'failed' ? (
-          <Icon name="alert" size={19} />
+          <Icon name="alert" size={20} />
         ) : (
-          <Icon name="clock" size={19} className="dot-live" />
+          <Icon name="clock" size={20} className="dot-live" />
         )}
       </span>
       <span className="job__main">

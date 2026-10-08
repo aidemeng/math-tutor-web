@@ -36,19 +36,6 @@
 
 /* ---------- 底部标签栏 ---------- */
 
-.tabbar__item .tabbar__icon {
-  border-radius: var(--r-md);
-  transition: background-color var(--t-base) var(--ease-out);
-}
-
-.tabbar__item[aria-current='page'] .tabbar__icon {
-  background: var(--brand-soft);
-}
-
-.tabbar__item:active .tabbar__icon {
-  background: var(--paper-sunken);
-}
-
 /* ---------- 通用页面头部 ---------- */
 
 .page-head {

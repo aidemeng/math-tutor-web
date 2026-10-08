@@ -14,10 +14,6 @@
     border-color var(--t-base) var(--ease-out),
     box-shadow var(--t-base) var(--ease-out);
 }
-.qcard--current {
-  border-color: var(--brand-ring);
-  box-shadow: 0 0 0 1px var(--brand-ring);
-}
 
 .qcard--loading {
   gap: 0;
@@ -56,48 +52,69 @@
 }
 
 .qcard__derive {
-  display: flex;
-  gap: 2px;
-  padding: 3px;
-  border-radius: var(--r-md);
-  background: var(--paper-sunken);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 6px;
 }
 .qcard__derive-btn {
-  flex: 1;
-  padding: 7px 4px;
-  border-radius: var(--r-sm);
-  font-size: 13px;
+  min-height: 44px;
+  padding: 10px 6px;
+  border-radius: 12px;
+  background: #eff7f3;
+  font-size: 14px;
   font-weight: 500;
-  color: var(--ink-2);
-  transition:
-    background-color var(--t-fast) var(--ease-out),
-    color var(--t-fast) var(--ease-out);
+  color: #285849;
+  transition: background-color var(--t-fast) var(--ease-out);
 }
 .qcard__derive-btn:hover:not(:disabled) {
-  background: var(--paper);
-  color: var(--ink);
+  background: #e2f0e8;
 }
 .qcard__derive-btn:disabled {
   opacity: 0.5;
 }
-
-.qcard__footer {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
 .qcard__video {
   width: 100%;
-}
-.qcard__analysis {
-  width: 100%;
-  background: none;
-  border: 0;
-  color: var(--ink-2);
-  font-weight: 500;
-  min-height: 36px;
+  min-height: 52px;
+  gap: 10px;
+  border-radius: 14px;
+  background: #18765d;
+  font-size: 16px;
+  font-weight: 650;
   box-shadow: none;
 }
-.qcard__analysis:hover {
-  color: var(--brand);
+.qcard__video:hover:not(:disabled) {
+  background: #12654f;
+  box-shadow: none;
+}
+.qcard__derive-btn:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 3px;
+}
+
+.qcard__head {
+  align-items: flex-start;
+}
+.qcard__source {
+  min-width: 0;
+  white-space: normal;
+  line-height: 1.5;
+}
+.qcard__head > :last-child {
+  flex-shrink: 0;
+}
+.qcard__stem {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.qcard__stem table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+.sheet__body > .qcard,
+.question-reader .qcard {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
 }

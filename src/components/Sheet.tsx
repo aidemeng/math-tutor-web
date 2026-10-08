@@ -1,6 +1,12 @@
-import { useEffect, useRef, useState, type ReactNode, type TouchEvent } from 'react';
-import { Icon } from './Icon';
-import '../styles/sheet.css';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type TouchEvent,
+} from "react";
+import { Icon } from "./Icon";
+import "../styles/sheet.css";
 
 interface SheetProps {
   open: boolean;
@@ -8,10 +14,18 @@ interface SheetProps {
   onClose(): void;
   children: ReactNode;
   footer?: ReactNode;
+  navigation?: ReactNode;
 }
 
 /** 底部抽屉：点遮罩、按 Esc、下滑都可关闭。 */
-export function Sheet({ open, title, onClose, children, footer }: SheetProps) {
+export function Sheet({
+  open,
+  title,
+  onClose,
+  children,
+  footer,
+  navigation,
+}: SheetProps) {
   const [dragY, setDragY] = useState(0);
   const startY = useRef<number | null>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -22,13 +36,13 @@ export function Sheet({ open, title, onClose, children, footer }: SheetProps) {
       return;
     }
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === "Escape") onClose();
     };
-    document.addEventListener('keydown', onKey);
+    document.addEventListener("keydown", onKey);
     const previous = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = "hidden";
     return () => {
-      document.removeEventListener('keydown', onKey);
+      document.removeEventListener("keydown", onKey);
       document.body.style.overflow = previous;
     };
   }, [open, onClose]);
@@ -52,11 +66,20 @@ export function Sheet({ open, title, onClose, children, footer }: SheetProps) {
   };
 
   return (
-    <div className="sheet-overlay" role="dialog" aria-modal="true" aria-label={title}>
+    <div
+      className="sheet-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+    >
       <div className="sheet-mask" onClick={onClose} />
       <section
         className="sheet"
-        style={dragY ? { transform: `translateY(${dragY}px)`, transition: 'none' } : undefined}
+        style={
+          dragY
+            ? { transform: `translateY(${dragY}px)`, transition: "none" }
+            : undefined
+        }
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -64,10 +87,18 @@ export function Sheet({ open, title, onClose, children, footer }: SheetProps) {
         <div className="sheet__grabber" />
         <header className="sheet__header">
           <h2 className="sheet__title">{title}</h2>
-          <button type="button" className="iconbtn iconbtn--plain" onClick={onClose} aria-label="关闭">
+          <button
+            type="button"
+            className="iconbtn iconbtn--plain"
+            onClick={onClose}
+            aria-label="关闭"
+          >
             <Icon name="close" size={18} />
           </button>
         </header>
+        {navigation ? (
+          <div className="sheet__navigation">{navigation}</div>
+        ) : null}
         <div className="sheet__body" ref={bodyRef}>
           {children}
         </div>

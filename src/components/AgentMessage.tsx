@@ -1,15 +1,21 @@
-import { useApp, useStoreRevision } from '../store/AppContext';
-import { Markdown } from './Markdown';
-import { Icon } from './Icon';
-import '../styles/chat.css';
+import { useApp, useStoreRevision } from "../store/AppContext";
+import { Markdown } from "./Markdown";
+import { BrandLogo } from "./BrandLogo";
+import "../styles/chat.css";
+import type { ReactNode } from "react";
 
 interface AgentMessageProps {
   turnIndex: number;
   conversationId: string;
+  children?: ReactNode;
 }
 
 /** 助手回复：跟随对话轮次实时更新，流式输出时展示光标。 */
-export function AgentMessage({ turnIndex, conversationId }: AgentMessageProps) {
+export function AgentMessage({
+  turnIndex,
+  conversationId,
+  children,
+}: AgentMessageProps) {
   const { store } = useApp();
   useStoreRevision();
 
@@ -21,25 +27,32 @@ export function AgentMessage({ turnIndex, conversationId }: AgentMessageProps) {
   const streaming = store.state.busy && isLast;
   const label = streaming && turn.status ? turn.status : null;
 
-  if (!turn.reply && !streaming) return null;
+  const redundantReply =
+    !!children &&
+    /^题目已找到[，,]\s*解析和后续操作见题卡[。.]?$/.test(turn.reply.trim());
+  const reply = redundantReply ? "" : turn.reply;
+  if (!reply && !streaming && !children) return null;
 
   return (
     <div className="agent">
       <span className="agent__avatar" aria-hidden="true">
-        <Icon name="sparkle" size={15} />
+        <BrandLogo size={26} />
       </span>
-      <div className="agent__bubble">
-        {turn.reply ? (
-          <Markdown value={turn.reply} streaming={streaming} />
-        ) : null}
-        {streaming ? (
-          <div className="agent__typing">
-            <span className="agent__dot" />
-            <span className="agent__dot" />
-            <span className="agent__dot" />
-            {label ? <span className="agent__status">{label}</span> : null}
+      <div className="agent__content">
+        {reply || streaming ? (
+          <div className="agent__bubble">
+            {reply ? <Markdown value={reply} streaming={streaming} /> : null}
+            {streaming ? (
+              <div className="agent__typing">
+                <span className="agent__dot" />
+                <span className="agent__dot" />
+                <span className="agent__dot" />
+                {label ? <span className="agent__status">{label}</span> : null}
+              </div>
+            ) : null}
           </div>
         ) : null}
+        {children}
       </div>
     </div>
   );

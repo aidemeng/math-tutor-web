@@ -1,3 +1,4 @@
+import { BrandLogo } from '../components/BrandLogo';
 import { useState, type FormEvent } from 'react';
 import { friendlyError } from '../api/errors';
 import { Icon } from '../components/Icon';
@@ -40,7 +41,7 @@ export function LoginPage() {
     <div className="login">
       <div className="login__hero">
         <span className="login__logo">
-          <Icon name="sparkle" size={26} />
+          <BrandLogo size={52} />
         </span>
         <h1 className="login__title">数学备课助手</h1>
         <p className="login__subtitle">找真题 · 出变式 · 降难度 · 生成讲解视频</p>

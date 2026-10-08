@@ -1,3 +1,4 @@
+import { BrandLogo } from './BrandLogo';
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useApp, useStoreRevision } from '../store/AppContext';
@@ -45,7 +46,7 @@ export function Shell() {
           </button>
         ) : (
           <span className="brandmark" aria-hidden="true">
-            <Icon name="sparkle" size={17} />
+            <BrandLogo size={28} />
           </span>
         )}
         <h1 className={['appbar__title', back ? 'appbar__title--center' : ''].join(' ')}>{title}</h1>
@@ -80,13 +81,13 @@ export function Shell() {
         <nav className="tabbar" aria-label="主导航">
           <NavLink to="/" end className="tabbar__item">
             <span className="tabbar__icon">
-              <Icon name="chat" size={22} />
+              <Icon name="chat" size={20} />
             </span>
             助手
           </NavLink>
           <NavLink to="/videos" className="tabbar__item">
             <span className="tabbar__icon">
-              <Icon name="video" size={22} />
+              <Icon name="video" size={24} />
             </span>
             我的视频
             {pendingJobs > 0 ? <span className="tabbar__badge">{pendingJobs}</span> : null}

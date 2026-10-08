@@ -5,7 +5,12 @@
 .videos {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-4);
+  gap: var(--sp-3);
+  padding-top: var(--sp-4);
+}
+
+.videos .page-head {
+  margin-bottom: 0;
 }
 
 .spin {
@@ -48,6 +53,7 @@
 
 /* 状态色块：浅底色 + 语义色图标，替代饱和渐变块 */
 .job__thumb {
+  align-self: flex-start;
   display: grid;
   place-items: center;
   flex: none;
