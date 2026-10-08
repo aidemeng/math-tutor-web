@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { API_BASE_URL } from "../api/client";
 import { sharing, type PublicQuestion } from "../api/sharing";
 import { friendlyError } from "../api/errors";
@@ -53,27 +53,32 @@ function PublicStem({
   );
 }
 export function SharePage() {
+  const navigate = useNavigate();
   const { code = "" } = useParams(),
     [data, setData] = useState<Awaited<ReturnType<typeof sharing.read>> | null>(
       null,
     ),
     [error, setError] = useState(""),
     [videoError, setVideoError] = useState(false),
-    [retry, setRetry] = useState(0);
-  const visit = useRef<Promise<void> | null>(null),
+    [retry, setRetry] = useState(0),
+    [registering, setRegistering] = useState(false),
+    [registrationError, setRegistrationError] = useState("");
+  const visit = useRef<Promise<boolean> | null>(null),
     played = useRef(false);
   useEffect(() => {
     let live = true;
     setData(null);
     setError("");
     setVideoError(false);
+    setRegistrationError("");
+    visit.current = null;
     played.current = false;
     sharing
       .read(code)
       .then((r) => {
         if (!live) return;
         setData(r);
-        visit.current = sharing.event(code, "visit").catch(() => {});
+        visit.current = sharing.event(code, "visit").then(() => true, () => false);
       })
       .catch((e) => {
         if (live) setError(friendlyError(e));
@@ -83,8 +88,27 @@ export function SharePage() {
     };
   }, [code, retry]);
   async function track(event: "play" | "cta") {
-    await visit.current;
+    if (!(await visit.current)) return;
     await sharing.event(code, event).catch(() => {});
+  }
+  async function register() {
+    if (registering) return;
+    setRegistering(true);
+    setRegistrationError("");
+    try {
+      // Registration attribution reads the HttpOnly cookie written by this visit.
+      // Retry a failed visit before navigation; CTA analytics must not block signup.
+      if (!(await visit.current)) {
+        visit.current = sharing.event(code, "visit").then(() => true, () => false);
+        if (!(await visit.current)) throw new Error("来源记录失败");
+      }
+      void track("cta");
+      navigate("/?register=1");
+    } catch {
+      setRegistrationError("暂时无法进入注册，请重试。");
+    } finally {
+      setRegistering(false);
+    }
   }
   return (
     <main className="public-share">
@@ -135,13 +159,15 @@ export function SharePage() {
               </p>
             ) : null}
             <p className="muted">这段视频由数学备课助手制作。</p>
-            <Link
+            <button
+              type="button"
               className="btn btn--primary btn--block"
-              to="/?register=1"
-              onClick={() => void track("cta")}
+              disabled={registering}
+              onClick={() => void register()}
             >
-              制作我的讲解视频
-            </Link>
+              {registering ? "正在进入…" : "制作我的讲解视频"}
+            </button>
+            {registrationError ? <p role="alert">{registrationError}</p> : null}
             <p className="public-share__hint">
               面向数学老师 · 找真题、出变式、生成讲解视频
             </p>
