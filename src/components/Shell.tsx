@@ -11,6 +11,7 @@ const TAB_ROUTES = ['/', '/videos'];
 function useRouteTitle(pathname: string): { title: string; back: boolean } {
   if (pathname === '/') return { title: '数学备课助手', back: false };
   if (pathname === '/videos') return { title: '我的视频', back: false };
+  if (pathname === '/admin/growth') return { title: '分享转化', back: true };
   if (pathname === '/history') return { title: '对话记录', back: true };
   if (pathname.startsWith('/videos/')) return { title: '讲解视频', back: true };
   if (pathname.startsWith('/chat')) return { title: '备课对话', back: true };
@@ -51,6 +52,9 @@ export function Shell() {
         )}
         <h1 className={['appbar__title', back ? 'appbar__title--center' : ''].join(' ')}>{title}</h1>
         <div className="appbar__actions">
+          {session?.user.role === 'admin' ? (
+            <NavLink to="/admin/growth" className="iconbtn iconbtn--plain" aria-label="分享转化统计"><Icon name="chart" /></NavLink>
+          ) : null}
           {install.canInstall ? (
             <button type="button" className="iconbtn iconbtn--plain" onClick={() => void install.install()} aria-label="安装到桌面">
               <Icon name="install" />

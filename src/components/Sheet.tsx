@@ -15,6 +15,7 @@ interface SheetProps {
   children: ReactNode;
   footer?: ReactNode;
   navigation?: ReactNode;
+  fitContent?: boolean;
 }
 
 /** 底部抽屉：点遮罩、按 Esc、下滑都可关闭。 */
@@ -25,6 +26,7 @@ export function Sheet({
   children,
   footer,
   navigation,
+  fitContent = false,
 }: SheetProps) {
   const [dragY, setDragY] = useState(0);
   const startY = useRef<number | null>(null);
@@ -74,7 +76,7 @@ export function Sheet({
     >
       <div className="sheet-mask" onClick={onClose} />
       <section
-        className="sheet"
+        className={fitContent ? "sheet sheet--fit" : "sheet"}
         style={
           dragY
             ? { transform: `translateY(${dragY}px)`, transition: "none" }

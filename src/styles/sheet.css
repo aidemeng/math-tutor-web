@@ -188,3 +188,10 @@
   box-shadow: var(--shadow-lg);
   animation: riseIn var(--t-base) var(--ease-out);
 }
+
+.sheet--fit {
+  height: auto;
+}
+.sheet--fit .sheet__body {
+  flex: 0 1 auto;
+}

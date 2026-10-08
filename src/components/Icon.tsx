@@ -1,6 +1,10 @@
 import type { SVGProps } from 'react';
 import {
   ArrowUp,
+  Share2,
+  Copy,
+  ExternalLink,
+  ChartNoAxesCombined,
   BookOpen,
   Camera,
   Check,
@@ -26,6 +30,10 @@ import {
 } from 'lucide-react';
 
 const ICONS = {
+  share: Share2,
+  copy: Copy,
+  external: ExternalLink,
+  chart: ChartNoAxesCombined,
   chat: MessageCircle,
   video: Video,
   history: History,

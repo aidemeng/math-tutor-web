@@ -1,3 +1,4 @@
+import { VideoShare } from '../components/VideoShare';
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { friendlyError } from "../api/errors";
@@ -197,12 +198,6 @@ export function TaskPage() {
           </p>
         ) : null}
 
-        {status === "ready" ? (
-          <p className="task__review">
-            <Icon name="alert" size={14} />
-            待老师复核 · 分享前请完整预览并核对讲解
-          </p>
-        ) : null}
 
         <div className="task__actions">
           {status === "ready" && error ? (
@@ -225,6 +220,7 @@ export function TaskPage() {
               {saving ? "正在下载…" : "下载视频"}
             </button>
           ) : null}
+          {status === "ready" ? <VideoShare key={id} jobId={id} title={question?.title ?? "讲解视频"} /> : null}
           {status === "failed" ? (
             <button
               type="button"

@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom';
 import { BrandLogo } from '../components/BrandLogo';
 import { useState, type FormEvent } from 'react';
 import { friendlyError } from '../api/errors';
@@ -15,7 +16,8 @@ export function LoginPage() {
   const { login, error } = useApp();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [registering, setRegistering] = useState(false);
+  const [searchParams] = useSearchParams();
+  const [registering, setRegistering] = useState(searchParams.get('register') === '1');
   const [confirmation, setConfirmation] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
