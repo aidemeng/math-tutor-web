@@ -30,7 +30,7 @@ interface AppValue {
   session: StoredSession | null;
   client: TutorClient;
   store: TeacherStore | null;
-  login(username: string, password: string, name?: string): Promise<void>;
+  login(username: string, password: string, registering?: boolean): Promise<void>;
   logout(): Promise<void>;
   retry(): void;
 }
@@ -101,11 +101,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         storeRef.current = store;
         setStatus('ready');
       } catch (caught) {
+        if (cancelled) return;
         const code = (caught as ApiError).code ?? 'NETWORK_ERROR';
         if (code === 'SESSION_INVALID' || code === 'AUTH_REQUIRED' || code === 'ACCOUNT_DISABLED') {
           clearSession();
           tokenRef.current = null;
-          if (cancelled) return;
           setSession(null);
           setStatus('anonymous');
           setError(code === 'ACCOUNT_DISABLED' ? friendlyError(caught) : null);
@@ -143,8 +143,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [status]);
 
   const login = useCallback(
-    async (username: string, password: string, name?: string) => {
-      const result = name===undefined?await client.loginPassword(username.trim(),password):await client.register(username.trim(),password,name.trim());
+    async (username: string, password: string, registering?: boolean) => {
+      const result = registering?await client.register(username.trim(),password):await client.loginPassword(username.trim(),password);
       const stored = writeSession(result);
       tokenRef.current = stored.token;
       setSession(stored);

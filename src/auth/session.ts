@@ -2,6 +2,8 @@ import type { SessionInfo } from '../api/types';
 
 const STORAGE_KEY = 'tutor-session-v1';
 const ID_KEYS_PREFIX = 'tutor-submissions:';
+// 本地存储受限时保留当前页面的会话，登录仍由 HttpOnly Cookie 验证。
+let transientSession: StoredSession | null | undefined;
 
 export interface StoredSession {
   token: string;
@@ -18,6 +20,7 @@ function safeStorage(): Storage | null {
 }
 
 export function readSession(): StoredSession | null {
+  if (transientSession !== undefined) return transientSession;
   const storage = safeStorage();
   if (!storage) return null;
   try {
@@ -37,12 +40,30 @@ export function writeSession(session: SessionInfo): StoredSession {
     expiresAt: session.expiresAt,
     user: session.user,
   };
-  safeStorage()?.setItem(STORAGE_KEY, JSON.stringify(stored));
+  transientSession = stored;
+  try {
+    const storage = safeStorage();
+    if (storage) {
+      storage.setItem(STORAGE_KEY, JSON.stringify(stored));
+      transientSession = undefined;
+    }
+  } catch {
+    /* 保留当前页面会话 */
+  }
   return stored;
 }
 
 export function clearSession(): void {
-  safeStorage()?.removeItem(STORAGE_KEY);
+  transientSession = null;
+  try {
+    const storage = safeStorage();
+    if (storage) {
+      storage.removeItem(STORAGE_KEY);
+      transientSession = undefined;
+    }
+  } catch {
+    /* 即使存储不可写，也清掉当前页面会话 */
+  }
 }
 
 /** 令牌尚在有效期内才可使用；留出 30 秒余量避免临界失效。 */

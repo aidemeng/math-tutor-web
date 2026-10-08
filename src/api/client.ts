@@ -26,7 +26,7 @@ export interface MessageOptions {
 
 export interface TutorClient {
   loginPassword(username: string, password: string): Promise<SessionInfo>;
-  register(username: string, password: string, name: string): Promise<SessionInfo>;
+  register(username: string, password: string): Promise<SessionInfo>;
   me(): Promise<Me>;
   logout(): Promise<void>;
 
@@ -214,7 +214,7 @@ export function createClient(options: { getToken: () => string | null }): TutorC
 
   return {
     loginPassword: async (username, password) => ({...await request<Omit<SessionInfo,'token'>>('/v1/auth/password', {method:'POST',body:JSON.stringify({username,password})}),token:'cookie'}),
-    register: async (username, password, name) => ({...await request<Omit<SessionInfo,'token'>>('/v1/auth/register', {method:'POST',body:JSON.stringify({username,password,name})}),token:'cookie'}),
+    register: async (username, password) => ({...await request<Omit<SessionInfo,'token'>>('/v1/auth/register', {method:'POST',body:JSON.stringify({username,password})}),token:'cookie'}),
     me: () => request<Me>('/v1/me'),
     logout: () => request<void>('/v1/auth/session', { method: 'DELETE' }),
 

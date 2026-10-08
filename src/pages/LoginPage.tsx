@@ -12,7 +12,6 @@ const PREVIEW_ITEMS = [
 
 export function LoginPage() {
   const { login, error } = useApp();
-  const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [registering, setRegistering] = useState(false);
@@ -22,15 +21,15 @@ export function LoginPage() {
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (!username.trim() || !password || (registering && !name.trim())) {
-      setMessage('请填写账号、密码和必要的注册信息');
+    if (!username.trim() || !password) {
+      setMessage('请填写账号和密码');
       return;
     }
     if(registering && password!==confirmation){setMessage('两次输入的密码不一致');return;}
     setBusy(true);
     setMessage(null);
     try {
-      await login(username, password, registering?name:undefined);
+      await login(username, password, registering);
     } catch (caught) {
       setMessage(friendlyError(caught));
       setBusy(false);
@@ -51,10 +50,6 @@ export function LoginPage() {
         <h2 className="login__form-title">{registering?'注册教师账号':'欢迎回来'}</h2>
         <label className="field-label" htmlFor="username">登录账号</label>
         <input id="username" className="field" value={username} required minLength={4} maxLength={32} pattern="[a-zA-Z0-9][a-zA-Z0-9_.-]*" autoComplete="username" autoCapitalize="none" spellCheck={false} placeholder="4–32 位字母、数字、下划线或点" onChange={event=>setUsername(event.target.value)} />
-        {registering?<>
-          <label className="field-label" htmlFor="teacher-name" style={{marginTop:18}}>老师称呼</label>
-          <input id="teacher-name" className="field" value={name} required maxLength={60} autoComplete="nickname" placeholder="例如：王老师" onChange={event=>setName(event.target.value)} />
-        </>:null}
         <label className="field-label" htmlFor="password" style={{marginTop:18}}>密码</label>
         <input id="password" className="field" type="password" value={password} required minLength={10} maxLength={128} autoComplete={registering?'new-password':'current-password'} placeholder="至少 10 个字符" onChange={event=>setPassword(event.target.value)} />
         {registering?<>

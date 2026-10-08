@@ -46,9 +46,9 @@ const DERIVE_PROMPTS: Record<string, string> = {
 };
 
 const DERIVE_LABELS: Record<string, string> = {
-  similar: '找一道相似真题',
-  variant: '给这道题出一道变式',
-  easy: '把这道题的难度降低一点',
+  找相似真题: '找一道相似真题',
+  生成一道变式题: '给这道题出一道变式',
+  '降低难度，生成更基础的题': '把这道题的难度降低一点',
 };
 
 /** 把服务端约定格式的长提示词还原成老师看到的自然语言。 */
@@ -56,7 +56,7 @@ export function displayPrompt(text: string): string {
   const match = String(text).match(
     /^请针对题目 .+（题库版本 [^)）]+）(找相似真题|生成一道变式题|降低难度，生成更基础的题)，保留完整题干并给出解析。$/,
   );
-  return match ? DERIVE_LABELS[match[1]] : text;
+  return match ? DERIVE_LABELS[match[1]] ?? text : text;
 }
 
 /** 生成派生题请求的服务端提示词。 */
