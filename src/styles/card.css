@@ -118,3 +118,24 @@
   border: 0;
   border-radius: 0;
 }
+
+.qcard__variation {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #eff7f3;
+  color: #285849;
+  font-size: 13px;
+  line-height: 1.65;
+}
+.qcard__variation p {
+  margin: 0;
+}
+.question-list__variation {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.5;
+}

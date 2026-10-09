@@ -97,6 +97,7 @@ npm run typecheck  # 可选；构建本身只做转译不做类型检查
 ## 验证
 
 ```bash
+npm test            # 本仓库的展示与交互逻辑测试，无需相邻后端仓库
 npm run typecheck   # tsc --noEmit，0 错误
 npm run build       # 产出 dist/，含 sw.js 与 manifest.webmanifest
 ```

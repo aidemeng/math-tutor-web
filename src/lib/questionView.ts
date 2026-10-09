@@ -50,10 +50,22 @@ export function questionView(question: Question): QuestionView {
     explanation,
     answer: question.answer || explanation,
     benefit: method.join(" · "),
+    variationNote:
+      ["variant", "easier"].includes(question.kind ?? "") && question.variation
+        ? [question.variation.change, question.variation.goal]
+            .filter(Boolean)
+            .join(" ")
+        : undefined,
     review: question.review,
     raw: question,
   };
 }
+
+const VARIANT_GUIDANCE =
+  " 请围绕原题的数学核心设计有教学价值的变化，改变条件、结论或提问方式；不要只换数值。说明变在哪里和训练目的，独立求解检查后保存。";
+
+const EASIER_GUIDANCE =
+  " 请保留原题核心方法，针对实际难点降低一个层级，可补充中间条件、拆分目标或减少分类讨论；不要只把数字改小，也不要直接给出最终答案。简短说明降低了哪一步门槛，完整题干与解析放进题卡，不叙述生成过程。";
 
 const DERIVE_PROMPTS: Record<string, string> = {
   similar: "找相似真题",
@@ -69,7 +81,11 @@ const DERIVE_LABELS: Record<string, string> = {
 
 /** 把服务端约定格式的长提示词还原成老师看到的自然语言。 */
 export function displayPrompt(text: string): string {
-  const match = String(text).match(
+  const guidance = [VARIANT_GUIDANCE, EASIER_GUIDANCE].find((suffix) =>
+    text.endsWith(suffix),
+  );
+  const display = guidance ? text.slice(0, -guidance.length) : text;
+  const match = String(display).match(
     /^请针对题目 .+（题库版本 [^)）]+）(找相似真题|生成一道变式题|降低难度，生成更基础的题)，保留完整题干并给出解析。$/,
   );
   return match ? (DERIVE_LABELS[match[1]] ?? text) : text;
@@ -80,7 +96,14 @@ export function derivePrompt(
   question: Question,
   kind: keyof typeof DERIVE_PROMPTS,
 ): string {
-  return `请针对题目 ${question.id}（题库版本 ${question.bankVersion}）${DERIVE_PROMPTS[kind]}，保留完整题干并给出解析。`;
+  return (
+    `请针对题目 ${question.id}（题库版本 ${question.bankVersion}）${DERIVE_PROMPTS[kind]}，保留完整题干并给出解析。` +
+    (kind === "variant"
+      ? VARIANT_GUIDANCE
+      : kind === "easy"
+        ? EASIER_GUIDANCE
+        : "")
+  );
 }
 
 export const JOB_STATUS_TEXT: Record<string, string> = {

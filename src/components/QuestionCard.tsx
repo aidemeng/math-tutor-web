@@ -77,6 +77,14 @@ export function QuestionCard({
   );
   const content = (
     <>
+      {question.variationNote ? (
+        <div className="qcard__variation">
+          <strong>
+            {question.raw.kind === "easier" ? "降低门槛：" : "变式思路："}
+          </strong>
+          <Markdown value={question.variationNote} questionKey={questionKey} />
+        </div>
+      ) : null}
       <div className="qcard__stem">
         <Markdown value={question.stem} questionKey={questionKey} />
       </div>

@@ -1,7 +1,13 @@
 /** 后端契约类型 —— 与 math-tutor-service 的 API 返回保持一致。 */
 
-import type {Diagram} from '../lib/questionDiagram';
+import type { Diagram } from "../lib/questionDiagram";
 export interface Question {
+  variation?: {
+    direction: string;
+    invariant: string;
+    change: string;
+    goal: string;
+  };
   diagrams?: Diagram[];
   id: string;
   bankVersion: string;
@@ -37,6 +43,7 @@ export interface QuestionView {
   explanation: string;
   answer: string;
   benefit: string;
+  variationNote?: string;
   review?: string;
   raw: Question;
 }
@@ -50,17 +57,19 @@ export interface Conversation {
 
 export interface Message {
   id: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
   created_at: number;
 }
 
 export interface ConversationDetail extends Conversation {
-  context?: { currentQuestion?: { id: string; bankVersion: string } | null } | null;
+  context?: {
+    currentQuestion?: { id: string; bankVersion: string } | null;
+  } | null;
   messages: Message[];
 }
 
-export type JobStatus = 'queued' | 'running' | 'ready' | 'failed';
+export type JobStatus = "queued" | "running" | "ready" | "failed";
 
 export interface VideoJob {
   id: string;
@@ -83,12 +92,12 @@ export interface Me {
 
 /** SSE 事件协议。 */
 export type AgentEvent =
-  | { type: 'text'; text: string }
-  | { type: 'status'; text: string }
-  | { type: 'text_reset'; text: string }
-  | { type: 'question'; question: Question }
-  | { type: 'error'; error: string }
-  | { type: 'done' };
+  | { type: "text"; text: string }
+  | { type: "status"; text: string }
+  | { type: "text_reset"; text: string }
+  | { type: "question"; question: Question }
+  | { type: "error"; error: string }
+  | { type: "done" };
 
 /** 一轮对话（本地组装，用于渲染）。 */
 export interface Turn {

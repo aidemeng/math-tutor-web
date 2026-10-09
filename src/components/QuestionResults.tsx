@@ -49,6 +49,11 @@ export function QuestionResults({
                     {question.source}
                   </span>
                   <span className="question-list__title">{question.title}</span>
+                  {question.variationNote ? (
+                    <span className="question-list__variation">
+                      {question.variationNote}
+                    </span>
+                  ) : null}
                   <span className="question-list__meta">
                     <span>{question.kind}</span>
                     {question.level ? <span>{question.level}</span> : null}
