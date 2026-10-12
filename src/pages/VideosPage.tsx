@@ -56,7 +56,7 @@ export function VideosPage() {
             <Icon name="video" size={30} />
           </span>
           <p className="empty__title">还没有视频</p>
-          <p className="empty__text">在对话的题卡上点「生成讲解视频」，制作进度会出现在这里。</p>
+          <p className="empty__text">告诉助手想讲什么，或从题卡生成视频，制作进度会出现在这里。</p>
         </div>
       ) : (
         <ul className="job-list">
@@ -75,6 +75,7 @@ function JobRow({ job, onOpen }: { job: VideoJob; onOpen(): void }) {
   const view = useMemo(() => {
     try {
       const snapshot = JSON.parse(job.snapshot) as { question: Parameters<typeof questionView>[0] };
+      if((snapshot as any).mode==='method')return {title:(snapshot as any).title,source:'方法微课'};
       return questionView(snapshot.question);
     } catch {
       return null;

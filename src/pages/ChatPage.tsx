@@ -1,3 +1,4 @@
+import { VideoDraftCard } from "../components/VideoDraftCard";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { friendlyError } from "../api/errors";
@@ -256,6 +257,9 @@ export function ChatPage() {
                       onOpen={openQuestion}
                     />
                   </div>
+                ) : null}
+                {turn.videoDraft ? (
+                  <VideoDraftCard draft={turn.videoDraft} />
                 ) : null}
               </AgentMessage>
 

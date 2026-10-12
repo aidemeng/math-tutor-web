@@ -92,15 +92,18 @@ export interface Me {
 
 /** SSE 事件协议。 */
 export type AgentEvent =
-  | { type: "text"; text: string }
-  | { type: "status"; text: string }
-  | { type: "text_reset"; text: string }
-  | { type: "question"; question: Question }
-  | { type: "error"; error: string }
-  | { type: "done" };
+  | { type: 'text'; text: string }
+  | { type: 'status'; text: string }
+  | { type: 'text_reset'; text: string }
+  | { type: 'question'; question: Question }
+  | { type: 'video_draft'; draft: VideoDraft }
+  | { type: 'video_job'; job: VideoJob }
+  | { type: 'error'; error: string }
+  | { type: 'done' };
 
 /** 一轮对话（本地组装，用于渲染）。 */
 export interface Turn {
+  videoDraft?: VideoDraft;
   prompt: string;
   photoId?: string;
   photo?: string;
@@ -109,3 +112,5 @@ export interface Turn {
   questions: Question[];
   error: string | null;
 }
+
+export interface VideoDraft {id:string;mode:'question'|'method';title:string;requirements:string;script:string;examples:{purpose:string;question:Question}[];createdAt:number;}
