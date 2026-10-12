@@ -2,7 +2,7 @@ import { useApp, useStoreRevision } from "../store/AppContext";
 import { Markdown } from "./Markdown";
 import { BrandLogo } from "./BrandLogo";
 import "../styles/chat.css";
-import type { ReactNode } from "react";
+import {Children, type ReactNode} from "react";
 
 interface AgentMessageProps {
   turnIndex: number;
@@ -27,11 +27,12 @@ export function AgentMessage({
   const streaming = store.state.busy && isLast;
   const label = streaming && turn.status ? turn.status : null;
 
+  const hasContent = Children.toArray(children).length > 0;
   const redundantReply =
-    !!children &&
+    hasContent &&
     /^题目已找到[，,]\s*解析和后续操作见题卡[。.]?$/.test(turn.reply.trim());
   const reply = redundantReply ? "" : turn.reply;
-  if (!reply && !streaming && !children) return null;
+  if (!reply && !streaming && !hasContent) return null;
 
   return (
     <div className="agent">

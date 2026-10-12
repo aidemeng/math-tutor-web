@@ -1,3 +1,4 @@
+import {TurnError} from "../components/TurnError";
 import { VideoDraftCard } from "../components/VideoDraftCard";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -264,21 +265,14 @@ export function ChatPage() {
               </AgentMessage>
 
               {turn.error ? (
-                <div className="notice notice--danger turn__error" role="alert">
-                  <Icon name="alert" size={17} />
-                  <span>{friendlyError(turn.error)}</span>
-                </div>
+                <TurnError message={friendlyError(turn.error)} disabled={busy}
+                  onEdit={!turn.photoId && !turn.photo ? () => {setDraft(turn.prompt);setError("");} : undefined}/>
               ) : null}
             </section>
           );
         })}
 
-        {error ? (
-          <div className="notice notice--danger chat__error" role="alert">
-            <Icon name="alert" size={17} />
-            <span>{error}</span>
-          </div>
-        ) : null}
+        {error && !turns[turns.length-1]?.error ? <TurnError message={error}/> : null}
       </main>
 
       <div className="composer-dock">

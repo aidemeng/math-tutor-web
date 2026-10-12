@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
 import { Icon } from './Icon';
 import { friendlyError } from '../api/errors';
 import { readPhotoFile, type PhotoPayload } from '../lib/photo';
@@ -14,6 +14,7 @@ interface ComposerProps {
   onPhotoChange(photo: PhotoPayload | null): void;
   onSend(): void;
   onError(message: string): void;
+  fileInputRef?: RefObject<HTMLInputElement | null>;
 }
 
 /**
@@ -30,9 +31,11 @@ export function ChatComposer({
   onPhotoChange,
   onSend,
   onError,
+  fileInputRef,
 }: ComposerProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const internalFileRef = useRef<HTMLInputElement>(null);
+  const fileRef = fileInputRef || internalFileRef;
 
   const canSend = !busy && (value.trim().length > 0 || !!photo);
 

@@ -109,11 +109,15 @@ export function createTeacherStore(options: {
     for (const turn of state.turns) {
       for (const raw of turn.questions)
         questions.set(questionView(raw).key, raw);
+      for (const example of turn.videoDraft?.examples || [])
+        questions.set(questionView(example.question).key, example.question);
     }
     for (const job of state.jobs) {
       try {
-        const snapshot = JSON.parse(job.snapshot) as { question: Question };
-        questions.set(questionView(snapshot.question).key, snapshot.question);
+        const snapshot = JSON.parse(job.snapshot) as { question?: Question; examples?: {question: Question}[] };
+        if (snapshot.question) questions.set(questionView(snapshot.question).key, snapshot.question);
+        for (const example of snapshot.examples || [])
+          questions.set(questionView(example.question).key, example.question);
       } catch {
         /* 快照损坏时忽略这一条 */
       }
