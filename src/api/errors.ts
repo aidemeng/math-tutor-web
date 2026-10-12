@@ -63,6 +63,8 @@ const MESSAGES: Record<string, string> = {
   MESSAGE_REQUIRED: '请输入内容或上传题目照片',
   INVALID_SAVED_MESSAGE: '历史记录存在无法解析的内容',
 
+  VIDEO_CONFIRMATION_REQUIRED: '请先查看讲解稿，再确认制作视频',
+  VIDEO_DRAFT_NOT_FOUND: '讲解稿不存在，请重新生成',
   CREDITS_EXHAUSTED: '视频额度不足',
   JOB_NOT_FAILED: '该任务无需重试',
   VIDEO_NOT_READY: '视频尚未完成',

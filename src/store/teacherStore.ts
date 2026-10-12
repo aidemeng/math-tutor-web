@@ -46,6 +46,7 @@ export interface TeacherStore {
     intent?: string,
   ): Promise<VideoJob>;
   retry(id: string): Promise<VideoJob>;
+  submitDraft(id: string, retryOf?: string): Promise<VideoJob>;
 
   /** 按题卡 key 取原始题目。 */
   question(key: string): Question | undefined;
@@ -120,6 +121,15 @@ export function createTeacherStore(options: {
   }
 
   function applyEvent(turn: Turn, event: AgentEvent): void {
+    if (event.type === "video_draft") turn.videoDraft = event.draft;
+    if (event.type === "video_job") {
+      const i = state.jobs.findIndex((j) => j.id === event.job.id);
+      if (i < 0) state.jobs.unshift(event.job);
+      else state.jobs[i] = event.job;
+      jobsVersion++;
+      void refreshJobs().catch(() => {});
+    }
+
     if (event.type === "text" && typeof event.text === "string")
       turn.reply += event.text;
     if (event.type === "status" && typeof event.text === "string")
@@ -399,13 +409,26 @@ export function createTeacherStore(options: {
     return result.job;
   }
 
+  async function submitDraft(id: string, retryOf?: string): Promise<VideoJob> {
+    if (!state.user) throw stateError("AUTH_REQUIRED");
+    const result = await client.submitVideoDraft(id, retryOf);
+    jobsVersion++;
+    const index = state.jobs.findIndex((j) => j.id === result.job.id);
+    if (index < 0) state.jobs.unshift(result.job);
+    else state.jobs[index] = result.job;
+    emit();
+    void refreshJobs().catch(() => {});
+    return result.job;
+  }
   async function retry(id: string): Promise<VideoJob> {
     const job = state.jobs.find((item) => item.id === id);
     if (!job || job.status !== "failed") throw stateError("JOB_NOT_FAILED");
     const snapshot = JSON.parse(job.snapshot) as {
       question: Question;
       requirements?: string;
+      draftId?: string;
     };
+    if (snapshot.draftId) return submitDraft(snapshot.draftId, id);
     return enqueue(
       snapshot.question,
       snapshot.requirements || "",
@@ -475,6 +498,7 @@ export function createTeacherStore(options: {
     similar,
     refreshJobs,
     enqueue,
+    submitDraft,
     retry,
     question,
     assetUrl,

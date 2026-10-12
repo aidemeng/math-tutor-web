@@ -49,6 +49,7 @@ export interface TutorClient {
     input: { questionId: string; bankVersion: string; requirements?: string },
     idempotencyKey: string,
   ): Promise<{ job: VideoJob }>;
+  submitVideoDraft(id:string,retryOf?:string): Promise<{job:VideoJob}>;
   listVideoJobs(): Promise<{ jobs: VideoJob[] }>;
   getVideoJob(id: string): Promise<{ job: VideoJob }>;
   fetchVideo(id: string): Promise<Blob>;
@@ -254,6 +255,7 @@ export function createClient(options: { getToken: () => string | null }): TutorC
         body: JSON.stringify(input),
         headers: { 'Idempotency-Key': key },
       }),
+    submitVideoDraft: (id,retryOf) => request(`/v1/video-drafts/${encodeURIComponent(id)}/submit`, {method:'POST',body:JSON.stringify({confirmed:true,retryOf})}),
     listVideoJobs: () => request('/v1/video-jobs'),
     getVideoJob: (id) => request(`/v1/video-jobs/${encodeURIComponent(id)}`),
     videoPlayback: (id) => request(`/v1/video-jobs/${encodeURIComponent(id)}/playback`, {method: 'POST', signal: AbortSignal.timeout(15000)}),

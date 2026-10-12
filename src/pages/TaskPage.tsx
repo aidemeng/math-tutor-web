@@ -30,6 +30,7 @@ export function TaskPage() {
   const [saving, setSaving] = useState(false);
 
   const job = store?.state.jobs.find((item) => item.id === id) ?? null;
+  const method = useMemo(()=>{try{const s=JSON.parse(job?.snapshot||'{}');return s.mode==='method'?s:null;}catch{return null;}},[job]);
   const question = useMemo(() => {
     if (!job) return null;
     try {
@@ -141,7 +142,7 @@ export function TaskPage() {
     <main className="page task">
       <section className="card task__card">
         <header className="task__head">
-          <h2 className="task__title">{question?.title ?? "讲解视频"}</h2>
+          <h2 className="task__title">{method?.title ?? question?.title ?? "讲解视频"}</h2>
           <span className={`task__status ${STATUS_CLASS[status] ?? ""}`}>
             <i className={status === "running" ? "dot-live" : undefined} />
             {statusText(status)}
@@ -220,7 +221,7 @@ export function TaskPage() {
               {saving ? "正在下载…" : "下载视频"}
             </button>
           ) : null}
-          {status === "ready" ? <VideoShare key={id} jobId={id} title={question?.title ?? "讲解视频"} /> : null}
+          {status === "ready" ? <VideoShare key={id} jobId={id} title={method?.title ?? question?.title ?? "讲解视频"} /> : null}
           {status === "failed" ? (
             <button
               type="button"
@@ -244,6 +245,7 @@ export function TaskPage() {
         </div>
       </section>
 
+      {method ? <section className="card task__question"><span className="pill pill--plain">方法微课</span><Markdown value={method.script}/></section>:null}
       {question ? (
         <section className="card task__question">
           <span className="pill pill--plain">{question.source}</span>
