@@ -1,3 +1,4 @@
+import { useErrorToast } from "../components/Toast";
 import { useEffect, useState } from "react";
 import { sharing, type GrowthRow } from "../api/sharing";
 import { friendlyError } from "../api/errors";
@@ -10,6 +11,7 @@ export function GrowthPage() {
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [attempt, setAttempt] = useState(0);
+  useErrorToast(error);
   useEffect(() => {
     if (session?.user.role !== "admin") return;
     let live = true;
@@ -67,11 +69,6 @@ export function GrowthPage() {
         </button>
       </div>
       {busy ? <p role="status">正在加载统计…</p> : null}
-      {error ? (
-        <p className="notice notice--danger" role="alert">
-          {error}
-        </p>
-      ) : null}
       <div className="growth__totals">
         {[
           ["链接访客", totals.visits],

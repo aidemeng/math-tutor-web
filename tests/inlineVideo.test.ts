@@ -15,10 +15,11 @@ it('shows a play cover without loading media before the teacher clicks',()=>{
 
 it('native playback waits for a click, prevents duplicate requests and can retry a failed URL',async()=>{
  let definition:any,requests=0,resolve:any;
+ const notices:string[]=[];
  runInNewContext(readFileSync('../math-tutor-miniapp/components/inline-video/index.js','utf8'),{
   Component:(value:any)=>definition=value,
   getApp:()=>({runtime:{videoPlayback:()=>{requests++;return new Promise(r=>resolve=r);}}}),
-  wx:{createVideoContext:()=>({pause(){}})}
+  wx:{createVideoContext:()=>({pause(){}}),showToast:({title}:{title:string})=>notices.push(title)}
  });
  const instance:any={data:{...definition.data,jobId:'j1'},setData(next:any){Object.assign(this.data,next);}};
  Object.assign(instance,definition.methods);
@@ -30,6 +31,7 @@ it('native playback waits for a click, prevents duplicate requests and can retry
  expect(instance.data.src).toBe('https://example.com/one.mp4');
  instance.failed();
  expect(instance.data.src).toBe('');
+ expect(notices).toEqual(['视频暂时无法播放，请重试']);
  const retry=instance.play();
  resolve({url:'https://example.com/two.mp4'});await retry;
  expect(instance.data.src).toBe('https://example.com/two.mp4');

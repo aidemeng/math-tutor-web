@@ -100,10 +100,6 @@
   color: var(--ink-3);
 }
 
-.home__error {
-  margin: 0;
-}
-
 .home__recent-list {
   display: flex;
   flex-direction: column;

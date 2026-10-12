@@ -12,7 +12,7 @@ import { Markdown } from "../components/Markdown";
 import { QuestionCard, type DeriveKind } from "../components/QuestionCard";
 import { QuestionResults } from "../components/QuestionResults";
 import { Sheet } from "../components/Sheet";
-import { toast } from "../components/Toast";
+import { toast, useErrorToast } from "../components/Toast";
 import { derivePrompt, questionView } from "../lib/questionView";
 import type { PhotoPayload } from "../lib/photo";
 import { useApp, useStoreRevision } from "../store/AppContext";
@@ -38,8 +38,8 @@ export function ChatPage() {
   }, [detailKey, readerTab]);
   const [videoKey, setVideoKey] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
   const [conversationError, setConversationError] = useState("");
+  useErrorToast(conversationError);
 
   const openedRef = useRef<string | null>(null);
   const followRef = useRef(true);
@@ -118,7 +118,6 @@ export function ChatPage() {
   }, []);
 
   const report = useCallback((message: string) => {
-    setError(message);
     toast(message);
   }, []);
 
@@ -129,7 +128,6 @@ export function ChatPage() {
     const text = draft.trim();
     if (!text && !photo) return;
     setDraft("");
-    setError("");
     followRef.current = true;
     const payload = photo;
     setPhoto(null);
@@ -140,11 +138,17 @@ export function ChatPage() {
     }
   }
 
+  async function retryTurn(index: number) {
+    if (!store || busy) return;
+    followRef.current = true;
+    try {await store.retryTurn(index);}
+    catch (caught) {report(friendlyError(caught));}
+  }
+
   async function derive(kind: DeriveKind, key: string) {
     if (!store) return;
     const raw = store.question(key);
     if (!raw) return;
-    setError("");
     followRef.current = true;
     try {
       await store.send(derivePrompt(raw, kind), {
@@ -188,8 +192,7 @@ export function ChatPage() {
     <>
       <main className="page page--composer chat" ref={mainRef}>
         {conversationError ? (
-          <div className="notice notice--danger" role="alert">
-            <span>{conversationError}</span>
+          <div>
             <button
               type="button"
               className="btn btn--quiet"
@@ -217,7 +220,7 @@ export function ChatPage() {
           </button>
         ) : null}
 
-        {!turns.length && !busy && !error ? (
+        {!turns.length && !busy ? (
           <div className="empty">
             <span className="empty__icon">
               <Icon name="book" size={30} />
@@ -265,14 +268,12 @@ export function ChatPage() {
               </AgentMessage>
 
               {turn.error ? (
-                <TurnError message={friendlyError(turn.error)} disabled={busy}
-                  onEdit={!turn.photoId && !turn.photo ? () => {setDraft(turn.prompt);setError("");} : undefined}/>
+                <TurnError disabled={busy} onRetry={() => void retryTurn(index)}/>
               ) : null}
             </section>
           );
         })}
 
-        {error && !turns[turns.length-1]?.error ? <TurnError message={error}/> : null}
       </main>
 
       <div className="composer-dock">

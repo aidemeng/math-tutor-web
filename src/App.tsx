@@ -11,7 +11,7 @@ import {
 } from "react-router-dom";
 import { Icon } from "./components/Icon";
 import { Shell } from "./components/Shell";
-import { ToastHost } from "./components/Toast";
+import { ToastHost, useErrorToast } from "./components/Toast";
 import { ChatPage } from "./pages/ChatPage";
 import { HistoryPage } from "./pages/HistoryPage";
 import { HomePage } from "./pages/HomePage";
@@ -49,15 +49,13 @@ function ErrorScreen({
   message: string | null;
   onRetry(): void;
 }) {
+  useErrorToast(message);
   return (
     <div className="splash">
       <span className="splash__logo splash__logo--warn">
         <Icon name="alert" size={24} />
       </span>
       <p className="splash__title">没能连上服务</p>
-      <p className="splash__text">
-        {message ?? "请检查网络或服务地址后重试。"}
-      </p>
       <button type="button" className="btn btn--primary" onClick={onRetry}>
         <Icon name="refresh" size={17} />
         重新连接
@@ -71,7 +69,7 @@ function PrivateApp() {
 
   if (status === "loading") return <Splash />;
   if (status === "error")
-    return <ErrorScreen message={error} onRetry={retry} />;
+    return <><ErrorScreen message={error} onRetry={retry} /><ToastHost /></>;
   if (status === "anonymous") {
     return (
       <>

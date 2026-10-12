@@ -1,3 +1,4 @@
+import { useErrorToast } from "../components/Toast";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { API_BASE_URL } from "../api/client";
@@ -65,6 +66,9 @@ export function SharePage() {
     [registrationError, setRegistrationError] = useState("");
   const visit = useRef<Promise<boolean> | null>(null),
     played = useRef(false);
+  useErrorToast(error);
+  useErrorToast(registrationError);
+  useErrorToast(videoError ? "视频暂时无法播放，请重试" : "");
   useEffect(() => {
     let live = true;
     setData(null);
@@ -119,7 +123,6 @@ export function SharePage() {
       {error ? (
         <section className="card share-controls">
           <h1>暂时无法观看</h1>
-          <p>{error}</p>
           <button
             className="btn btn--quiet"
             onClick={() => setRetry((v) => v + 1)}
@@ -148,8 +151,7 @@ export function SharePage() {
               onError={() => setVideoError(true)}
             />
             {videoError ? (
-              <p role="alert">
-                视频暂时无法播放，
+              <p>
                 <button
                   className="share-inline"
                   onClick={() => setRetry((v) => v + 1)}
@@ -167,7 +169,6 @@ export function SharePage() {
             >
               {registering ? "正在进入…" : "制作我的讲解视频"}
             </button>
-            {registrationError ? <p role="alert">{registrationError}</p> : null}
             <p className="public-share__hint">
               面向数学老师 · 找真题、出变式、生成讲解视频
             </p>

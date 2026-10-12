@@ -17,8 +17,7 @@ export function VideoDraftCard({ draft }: { draft: VideoDraft }) {
   useStoreRevision();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false),
-    [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
+    [busy, setBusy] = useState(false);
   const [exampleIndex, setExampleIndex] = useState<number | null>(null);
   const example = exampleIndex === null ? null : draft.examples[exampleIndex];
   const question = example ? questionView(example.question) : null;
@@ -27,13 +26,12 @@ export function VideoDraftCard({ draft }: { draft: VideoDraft }) {
   async function submit() {
     if (!store || busy) return;
     setBusy(true);
-    setError("");
     try {
       await store.submitDraft(draft.id);
       setOpen(false);
       toast("已提交后台制作");
     } catch (e) {
-      setError(friendlyError(e));
+      toast(friendlyError(e));
     } finally {
       setBusy(false);
     }
@@ -84,7 +82,6 @@ export function VideoDraftCard({ draft }: { draft: VideoDraft }) {
                 ? status
                 : "确认后使用 1 次视频额度，制作将在后台进行"}
             </p>
-            {error ? <p role="alert">{error}</p> : null}
             <button
               className="btn btn--primary btn--block"
               disabled={busy}

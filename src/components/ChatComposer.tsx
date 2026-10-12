@@ -1,16 +1,17 @@
-import { useEffect, useRef, useState, type RefObject } from 'react';
-import { Icon } from './Icon';
-import { friendlyError } from '../api/errors';
-import { readPhotoFile, type PhotoPayload } from '../lib/photo';
-import '../styles/composer.css';
-import { useApp } from '../store/AppContext';
-import { createVoiceInput, type VoiceState } from '../lib/voice';
+import { useEffect, useRef, useState, type RefObject } from "react";
+import { Icon } from "./Icon";
+import { friendlyError } from "../api/errors";
+import { readPhotoFile, type PhotoPayload } from "../lib/photo";
+import "../styles/composer.css";
+import { useApp } from "../store/AppContext";
+import { createVoiceInput, type VoiceState } from "../lib/voice";
 
 interface ComposerProps {
   value: string;
   photo: PhotoPayload | null;
   busy?: boolean;
   autoFocus?: boolean;
+  autoGrow?: boolean;
   placeholder?: string;
   onChange(value: string): void;
   onPhotoChange(photo: PhotoPayload | null): void;
@@ -28,7 +29,8 @@ export function ChatComposer({
   photo,
   busy = false,
   autoFocus = false,
-  placeholder = '输入题干或备课需求',
+  autoGrow = true,
+  placeholder = "输入题干或备课需求",
   onChange,
   onPhotoChange,
   onSend,
@@ -40,7 +42,7 @@ export function ChatComposer({
   const fileRef = fileInputRef || internalFileRef;
 
   const { client } = useApp();
-  const [voiceState, setVoiceState] = useState<VoiceState>('idle');
+  const [voiceState, setVoiceState] = useState<VoiceState>("idle");
   const [voiceSeconds, setVoiceSeconds] = useState(0);
   const callbacks = useRef({ value, onChange, onError, client });
   callbacks.current = { value, onChange, onError, client };
@@ -52,7 +54,7 @@ export function ChatComposer({
       onText: (text) => {
         const current = callbacks.current;
         current.onChange(
-          [current.value.trim(), text].filter(Boolean).join(' ').slice(0, 4000),
+          [current.value.trim(), text].filter(Boolean).join(" ").slice(0, 4000),
         );
         textareaRef.current?.focus();
       },
@@ -66,25 +68,25 @@ export function ChatComposer({
     const hidden = () => {
       if (document.hidden) voiceRef.current?.cancel();
     };
-    document.addEventListener('visibilitychange', hidden);
+    document.addEventListener("visibilitychange", hidden);
     return () => {
-      document.removeEventListener('visibilitychange', hidden);
+      document.removeEventListener("visibilitychange", hidden);
       voiceRef.current?.cancel();
     };
   }, []);
   useEffect(() => {
     if (busy) voiceRef.current?.cancel();
   }, [busy]);
-  const inputBusy = busy || voiceState !== 'idle';
+  const inputBusy = busy || voiceState !== "idle";
   const canSend = !inputBusy && (value.trim().length > 0 || !!photo);
 
   // 自适应高度，最多约 6 行
   useEffect(() => {
     const node = textareaRef.current;
-    if (!node) return;
-    node.style.height = 'auto';
+    if (!node || !autoGrow) return;
+    node.style.height = "auto";
     node.style.height = `${Math.min(node.scrollHeight, 138)}px`;
-  }, [value]);
+  }, [value, autoGrow, voiceState]);
 
   useEffect(() => {
     if (autoFocus) textareaRef.current?.focus();
@@ -124,29 +126,11 @@ export function ChatComposer({
         </div>
       ) : null}
 
-      {voiceState !== 'idle' && (
-        <div className="composer__voice" role="status" aria-live="polite">
-          <span
-            className={
-              voiceState === 'recording' ? 'composer__recording-dot' : ''
-            }
-          />
-          <span>
-            {voiceState === 'requesting'
-              ? '正在开启麦克风…'
-              : voiceState === 'recording'
-                ? `正在录音 ${voiceSeconds}s / 60s`
-                : '正在识别…'}
-          </span>
-          <button type="button" onClick={() => voiceRef.current?.cancel()}>
-            取消
-          </button>
-        </div>
-      )}
       <div className="composer__row">
         <button
           type="button"
           className="composer__icon composer__icon--photo"
+          hidden={voiceState !== "idle"}
           onClick={() => fileRef.current?.click()}
           disabled={inputBusy}
           aria-label="拍照或上传题目"
@@ -154,45 +138,71 @@ export function ChatComposer({
           <Icon name="camera" size={21} />
         </button>
 
-        <textarea
-          ref={textareaRef}
-          className="composer__input"
-          value={value}
-          rows={1}
-          maxLength={4000}
-          placeholder={placeholder}
-          disabled={inputBusy}
-          onChange={(event) => onChange(event.target.value)}
-          onKeyDown={(event) => {
-            if (
-              event.key === 'Enter' &&
-              !event.shiftKey &&
-              !event.nativeEvent.isComposing
-            ) {
-              event.preventDefault();
-              if (canSend) onSend();
-            }
-          }}
-        />
+        {voiceState !== "idle" && (
+          <div className="composer__voice" role="status" aria-live="polite">
+            <span
+              className={
+                voiceState === "recording" ? "composer__recording-dot" : ""
+              }
+            />
+            <span>
+              {voiceState === "requesting"
+                ? "正在开启麦克风…"
+                : voiceState === "recording"
+                  ? `正在录音 ${voiceSeconds}s / 60s`
+                  : "正在识别…"}
+            </span>
+            <button type="button" onClick={() => voiceRef.current?.cancel()}>
+              取消
+            </button>
+          </div>
+        )}
+        <div
+          className={`composer__field ${autoGrow ? "" : "composer__field--fixed"}`}
+          hidden={voiceState !== "idle"}
+        >
+          <textarea
+            ref={textareaRef}
+            className={`composer__input ${autoGrow ? "" : "composer__input--fixed"}`}
+            hidden={voiceState !== "idle"}
+            value={value}
+            rows={1}
+            maxLength={4000}
+            placeholder={placeholder}
+            disabled={inputBusy}
+            onChange={(event) => onChange(event.target.value)}
+            onKeyDown={(event) => {
+              if (
+                event.key === "Enter" &&
+                !event.shiftKey &&
+                !event.nativeEvent.isComposing
+              ) {
+                event.preventDefault();
+                if (canSend) onSend();
+              }
+            }}
+          />
+        </div>
 
         <button
           type="button"
-          className={`composer__icon composer__icon--voice ${voiceState === 'recording' ? 'is-recording' : ''}`}
-          aria-label={voiceState === 'recording' ? '结束录音' : '语音输入'}
+          className={`composer__icon composer__icon--voice ${voiceState === "recording" ? "is-recording" : ""}`}
+          aria-label={voiceState === "recording" ? "结束录音" : "语音输入"}
           disabled={
-            busy || voiceState === 'requesting' || voiceState === 'transcribing'
+            busy || voiceState === "requesting" || voiceState === "transcribing"
           }
           onClick={() =>
-            voiceState === 'recording'
+            voiceState === "recording"
               ? voiceRef.current?.stop()
               : void voiceRef.current?.start()
           }
         >
-          <Icon name={voiceState === 'recording' ? 'stop' : 'mic'} size={20} />
+          <Icon name={voiceState === "recording" ? "stop" : "mic"} size={20} />
         </button>
         <button
           type="button"
           className="composer__icon composer__icon--send"
+          hidden={voiceState !== "idle"}
           onClick={onSend}
           disabled={!canSend}
           aria-label="发送"
@@ -208,7 +218,7 @@ export function ChatComposer({
         className="sr-only"
         onChange={(event) => {
           void handleFile(event.target.files?.[0]);
-          event.target.value = '';
+          event.target.value = "";
         }}
       />
     </div>

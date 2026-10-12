@@ -97,7 +97,7 @@ export function createClient(options: { getToken: () => string | null }): TutorC
         },
       });
     } catch (error) {
-      throw new ApiError(/AbortError/.test(String(error)) ? 'ABORTED' : 'NETWORK_ERROR', 0);
+      throw new ApiError(/TimeoutError|timed out/i.test(String(error)) ? 'REQUEST_TIMEOUT' : /AbortError/.test(String(error)) ? 'ABORTED' : 'NETWORK_ERROR', 0);
     }
     if (response.status === 204) return undefined as T;
     let body: unknown = null;
@@ -112,6 +112,7 @@ export function createClient(options: { getToken: () => string | null }): TutorC
         (response.status === 401 ? 'SESSION_INVALID' : 'INTERNAL_ERROR');
       throw new ApiError(code, response.status);
     }
+    if (body === null) throw new ApiError('INVALID_RESPONSE', response.status);
     return body as T;
   }
 
@@ -160,7 +161,7 @@ export function createClient(options: { getToken: () => string | null }): TutorC
           signal: controller.signal,
         });
       } catch (error) {
-        throw new ApiError(/AbortError/.test(String(error)) ? 'ABORTED' : 'NETWORK_ERROR', 0);
+        throw new ApiError(/TimeoutError|timed out/i.test(String(error)) ? 'REQUEST_TIMEOUT' : /AbortError/.test(String(error)) ? 'ABORTED' : 'NETWORK_ERROR', 0);
       }
 
       if (!response.ok) {

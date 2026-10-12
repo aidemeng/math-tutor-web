@@ -20,6 +20,7 @@ const MESSAGES: Record<string, string> = {
   SPEECH_AUDIO_INVALID: '录音格式异常，请重新录音',
   SPEECH_AUDIO_TOO_LONG: '录音最长60秒，请分段输入',
   NETWORK_ERROR: '无法连接服务，请检查网络和服务地址',
+  REQUEST_TIMEOUT: '请求超时，请重试',
   SERVICE_NOT_CONFIGURED: '服务暂未配置',
   REQUEST_TOO_LARGE: '内容过长，请精简后重试',
   INVALID_RESPONSE: '服务返回异常，请重试',
@@ -97,6 +98,7 @@ export function friendlyError(error: unknown): string {
   if (typeof error === 'string') return MESSAGES[error] ?? error;
   const code = (error as { code?: string; message?: string }).code ?? (error as Error).message ?? '';
   if (MESSAGES[code]) return MESSAGES[code];
+  if (/TimeoutError|timed out|timeout/i.test(String(error))) return MESSAGES.REQUEST_TIMEOUT;
   // 浏览器原生网络错误
   if (/Failed to fetch|NetworkError|Load failed/i.test(code)) return MESSAGES.NETWORK_ERROR;
   if (/AbortError/i.test(code)) return MESSAGES.ABORTED;

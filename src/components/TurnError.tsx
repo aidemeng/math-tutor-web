@@ -1,7 +1,5 @@
-import {Icon} from './Icon';
-export function TurnError({message,onEdit,disabled=false}:{message:string;onEdit?:()=>void;disabled?:boolean}) {
-  return <div className="turn__failure" role="alert">
-    <Icon name="alert" size={14}/><span>{message}</span>
-    {onEdit ? <button type="button" disabled={disabled} onClick={onEdit}>修改提问</button> : null}
+export function TurnError({onRetry,disabled=false}:{onRetry:()=>void;disabled?:boolean}) {
+  return <div className="turn__failure">
+    <button type="button" disabled={disabled} onClick={onRetry}>重试</button>
   </div>;
 }

@@ -147,7 +147,11 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 8px 8px;
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  padding: 0 4px;
+  white-space: nowrap;
   color: var(--ink-2);
   font-size: 13px;
 }
@@ -172,4 +176,25 @@
   .composer__recording-dot {
     animation: none;
   }
+}
+
+.composer__row > [hidden] {
+  display: none;
+}
+
+.composer__field {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+.composer__field--fixed {
+  align-items: center;
+  height: 42px;
+  padding: 0 4px;
+}
+.composer__input--fixed {
+  height: 22.5px;
+  min-height: 22.5px;
+  max-height: 22.5px;
+  padding: 0;
 }

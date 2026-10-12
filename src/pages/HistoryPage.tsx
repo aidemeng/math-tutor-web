@@ -11,16 +11,23 @@ export function HistoryPage() {
   const { store } = useApp();
   const revision = useStoreRevision();
   const navigate = useNavigate();
-  const [refreshing, setRefreshing] = useState(false);
+  const [refreshing, setRefreshing] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (!store) return;
+    let live = true;
     setRefreshing(true);
+    setFailed(false);
     store
       .refreshConversations()
-      .catch((caught) => toast(friendlyError(caught)))
-      .finally(() => setRefreshing(false));
-  }, [store]);
+      .catch((caught) => {
+        if (live) {setFailed(true); toast(friendlyError(caught));}
+      })
+      .finally(() => {if (live) setRefreshing(false);});
+    return () => {live = false;};
+  }, [store, attempt]);
 
   const groups = useMemo(() => {
     if (!store) return [];
@@ -54,7 +61,9 @@ export function HistoryPage() {
         </div>
       ) : null}
 
-      {!refreshing && !groups.length ? (
+      {failed ? <button type="button" className="btn btn--quiet" disabled={refreshing} onClick={() => setAttempt(value => value + 1)}>重新加载记录</button> : null}
+
+      {!refreshing && !failed && !groups.length ? (
         <div className="empty">
           <span className="empty__icon">
             <Icon name="history" size={28} />

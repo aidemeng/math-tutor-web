@@ -15,19 +15,31 @@ export function toast(text: string): void {
   for (const handler of handlers) handler(item);
 }
 
+/** Keep failure state for retries while presenting its reason only briefly. */
+export function useErrorToast(message: string | null | undefined) {
+  useEffect(() => {
+    if (!message) return;
+    const timer = window.setTimeout(() => toast(message), 0);
+    return () => window.clearTimeout(timer);
+  }, [message]);
+}
+
 export function ToastHost() {
   const [items, setItems] = useState<ToastItem[]>([]);
 
   useEffect(() => {
+    let timer: number | undefined;
     const handler = (item: ToastItem) => {
-      setItems((current) => [...current, item]);
-      window.setTimeout(() => {
+      window.clearTimeout(timer);
+      setItems([item]);
+      timer = window.setTimeout(() => {
         setItems((current) => current.filter((value) => value.id !== item.id));
       }, 2600);
     };
     handlers.add(handler);
     return () => {
       handlers.delete(handler);
+      window.clearTimeout(timer);
     };
   }, []);
 

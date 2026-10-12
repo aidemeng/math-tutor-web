@@ -103,6 +103,8 @@ export type AgentEvent =
 
 /** 一轮对话（本地组装，用于渲染）。 */
 export interface Turn {
+  requestText?: string;
+  selectedQuestion?: { id: string; bankVersion: string };
   videoDraft?: VideoDraft;
   prompt: string;
   photoId?: string;

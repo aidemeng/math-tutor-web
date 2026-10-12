@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { friendlyError } from "../api/errors";
 import { Icon } from "../components/Icon";
 import { Markdown } from "../components/Markdown";
-import { toast } from "../components/Toast";
+import { toast, useErrorToast } from "../components/Toast";
 import { questionView, statusText } from "../lib/questionView";
 import { useApp, useStoreRevision } from "../store/AppContext";
 import "../styles/task.css";
@@ -25,9 +25,13 @@ export function TaskPage() {
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
   const [loadingVideo, setLoadingVideo] = useState(false);
   const [error, setError] = useState("");
+  useErrorToast(error);
   const [retrying, setRetrying] = useState(false);
   const [playAttempt, setPlayAttempt] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [refreshing, setRefreshing] = useState(true);
+  const [refreshFailed, setRefreshFailed] = useState(false);
+  const [refreshAttempt, setRefreshAttempt] = useState(0);
 
   const job = store?.state.jobs.find((item) => item.id === id) ?? null;
   const method = useMemo(()=>{try{const s=JSON.parse(job?.snapshot||'{}');return s.mode==='method'?s:null;}catch{return null;}},[job]);
@@ -46,8 +50,14 @@ export function TaskPage() {
   // 打开页面时拉一次最新状态，并在制作完成后取回视频
   useEffect(() => {
     if (!store || !id) return;
-    void store.refreshJobs().catch(() => {});
-  }, [store, id]);
+    let live = true;
+    setRefreshing(true);
+    setRefreshFailed(false);
+    void store.refreshJobs().catch(caught => {
+      if (live) {setRefreshFailed(true); toast(friendlyError(caught));}
+    }).finally(() => {if (live) setRefreshing(false);});
+    return () => {live = false;};
+  }, [store, id, refreshAttempt]);
 
   const jobStatus = job?.status;
   useEffect(() => {
@@ -91,7 +101,7 @@ export function TaskPage() {
       link.download = `讲解视频-${id.slice(0, 8)}.mp4`;
       link.click();
     } catch (caught) {
-      setError(friendlyError(caught));
+      toast(friendlyError(caught));
     } finally {
       setSaving(false);
     }
@@ -100,16 +110,21 @@ export function TaskPage() {
   async function retry() {
     if (!store || !id || retrying) return;
     setRetrying(true);
-    setError("");
     try {
       const created = await store.retry(id);
       toast("已重新提交制作");
       navigate(`/videos/${created.id}`, { replace: true });
     } catch (caught) {
-      setError(friendlyError(caught));
+      toast(friendlyError(caught));
     } finally {
       setRetrying(false);
     }
+  }
+
+  if (!job && (refreshing || refreshFailed)) {
+    return <main className="page task"><div className="empty">
+      {refreshing ? <p role="status">正在加载视频任务…</p> : <button type="button" className="btn btn--quiet" onClick={() => setRefreshAttempt(value => value + 1)}>重新加载任务</button>}
+    </div></main>;
   }
 
   if (!job) {
@@ -253,12 +268,6 @@ export function TaskPage() {
         </section>
       ) : null}
 
-      {error ? (
-        <div className="notice notice--danger" role="alert">
-          <Icon name="alert" size={17} />
-          <span>{error}</span>
-        </div>
-      ) : null}
     </main>
   );
 }

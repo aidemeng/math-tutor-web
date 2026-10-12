@@ -1,3 +1,4 @@
+import { toast, useErrorToast } from "../components/Toast";
 import { useSearchParams } from 'react-router-dom';
 import { BrandLogo } from '../components/BrandLogo';
 import { useState, type FormEvent } from 'react';
@@ -20,21 +21,20 @@ export function LoginPage() {
   const [registering, setRegistering] = useState(searchParams.get('register') === '1');
   const [confirmation, setConfirmation] = useState('');
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  useErrorToast(error);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!username.trim() || !password) {
-      setMessage('请填写账号和密码');
+      toast('请填写账号和密码');
       return;
     }
-    if(registering && password!==confirmation){setMessage('两次输入的密码不一致');return;}
+    if(registering && password!==confirmation){toast('两次输入的密码不一致');return;}
     setBusy(true);
-    setMessage(null);
     try {
       await login(username, password, registering);
     } catch (caught) {
-      setMessage(friendlyError(caught));
+      toast(friendlyError(caught));
       setBusy(false);
     }
   }
@@ -61,24 +61,12 @@ export function LoginPage() {
         </>:null}
         {registering?<p className="field-hint">请记住账号和密码，下次登录后可继续查看备课记录和视频。</p>:null}
 
-        {message ? (
-          <div className="notice notice--danger login__notice" role="alert">
-            <Icon name="alert" size={17} />
-            <span>{message}</span>
-          </div>
-        ) : null}
-        {error && !message ? (
-          <div className="notice notice--danger login__notice" role="alert">
-            <Icon name="alert" size={17} />
-            <span>{error}</span>
-          </div>
-        ) : null}
 
         <button type="submit" className="btn btn--primary btn--block login__submit" disabled={busy}>
           {busy ? (registering?'正在注册…':'正在登录…') : (registering?'注册并开始备课':'登录并进入备课')}
         </button>
 
-        <button type="button" className="login__switch" disabled={busy} onClick={()=>{setRegistering(value=>!value);setMessage(null);setPassword('');setConfirmation('');}}>{registering?'已有账号？去登录':'还没有账号？免费注册'}</button>
+        <button type="button" className="login__switch" disabled={busy} onClick={()=>{setRegistering(value=>!value);setPassword('');setConfirmation('');}}>{registering?'已有账号？去登录':'还没有账号？免费注册'}</button>
       </form>
 
       <ul className="login__features">

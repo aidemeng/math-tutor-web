@@ -5,7 +5,7 @@ import { API_BASE_URL } from "../api/client";
 import { friendlyError } from "../api/errors";
 import { Sheet } from "./Sheet";
 import { Icon } from "./Icon";
-import { toast } from "./Toast";
+import { toast, useErrorToast } from "./Toast";
 import "../styles/sharing.css";
 export function VideoShare({ jobId, title }: { jobId: string; title: string }) {
   const { store } = useApp();
@@ -17,6 +17,7 @@ export function VideoShare({ jobId, title }: { jobId: string; title: string }) {
     [showLink, setShowLink] = useState(false),
     [thumbnailError, setThumbnailError] = useState(false);
   const [rewards, setRewards] = useState<ReferralRewards | null>(null);
+  useErrorToast(open ? error : "");
   useEffect(() => {
     if (!open) return;
     let live = true;
@@ -186,11 +187,6 @@ export function VideoShare({ jobId, title }: { jobId: string; title: string }) {
               </button>
             </>
           )}
-          {error ? (
-            <p className="notice notice--danger" role="alert">
-              {error}
-            </p>
-          ) : null}
         </div>
       </Sheet>
     </>

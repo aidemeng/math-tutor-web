@@ -23,6 +23,8 @@ export interface StoreState {
 }
 
 export interface SendSettings {
+  photoId?: string;
+  photoPreview?: string;
   photo?: { mimeType: string; data: string; preview?: string };
   newConversation?: boolean;
   selectedQuestion?: { id: string; bankVersion: string };
@@ -38,6 +40,7 @@ export interface TeacherStore {
   refreshConversations(): Promise<void>;
   openConversation(id: string): Promise<void>;
   send(text: string, settings?: SendSettings): Promise<void>;
+  retryTurn(index: number): Promise<void>;
   similar(question: Question): Promise<void>;
   refreshJobs(): Promise<void>;
   enqueue(
@@ -205,25 +208,31 @@ export function createTeacherStore(options: {
         if (message.role === "user") {
           let prompt = message.content;
           let photoId: string | undefined;
+          let selectedQuestion: Turn["selectedQuestion"];
           try {
             const saved = JSON.parse(message.content) as {
               type?: string;
               text?: string;
               photoId?: string;
+              selectedQuestion?: {id?: unknown; bankVersion?: unknown};
             };
             if (
               saved.type === "teacher_input" &&
-              typeof saved.text === "string" &&
-              typeof saved.photoId === "string"
+              typeof saved.text === "string"
             ) {
               prompt = saved.text || "请识别这道题并检索匹配真题。";
-              photoId = saved.photoId;
+              photoId = typeof saved.photoId === "string" ? saved.photoId : undefined;
+              if (typeof saved.selectedQuestion?.id === "string" && typeof saved.selectedQuestion.bankVersion === "string") {
+                selectedQuestion = {id:saved.selectedQuestion.id,bankVersion:saved.selectedQuestion.bankVersion};
+              }
             }
           } catch {
             /* 纯文本输入 */
           }
           turns.push({
             prompt: displayPrompt(prompt),
+            requestText: prompt,
+            selectedQuestion,
             photoId,
             reply: "",
             questions: [],
@@ -260,13 +269,23 @@ export function createTeacherStore(options: {
     }
   }
 
+  async function retryTurn(index: number): Promise<void> {
+    const turn = state.turns[index];
+    if (!turn?.error) return;
+    await send(turn.requestText ?? turn.prompt, {
+      photoId: turn.photoId,
+      photoPreview: turn.photo,
+      selectedQuestion: turn.selectedQuestion,
+    });
+  }
+
   async function send(
     text: string,
     settings: SendSettings = {},
   ): Promise<void> {
     if (state.busy) throw stateError("MESSAGE_IN_PROGRESS");
     let content = String(text ?? "").trim();
-    if (!content && !settings.photo) throw stateError("MESSAGE_REQUIRED");
+    if (!content && !settings.photo && !settings.photoId) throw stateError("MESSAGE_REQUIRED");
     if (!content) content = "请识别这道题并检索匹配真题。";
 
     state.busy = true;
@@ -282,7 +301,7 @@ export function createTeacherStore(options: {
         state.conversations.unshift(created);
       }
 
-      let photoId: string | undefined;
+      let photoId = settings.photoId;
       if (settings.photo) {
         const uploaded = await client.uploadPhoto(state.activeId, {
           mimeType: settings.photo.mimeType,
@@ -293,8 +312,10 @@ export function createTeacherStore(options: {
 
       turn = {
         prompt: displayPrompt(content),
+        requestText: content,
+        selectedQuestion: settings.selectedQuestion,
         photoId,
-        photo: settings.photo?.preview,
+        photo: settings.photo?.preview ?? settings.photoPreview,
         reply: "",
         questions: [],
         error: null,
@@ -499,6 +520,7 @@ export function createTeacherStore(options: {
     refreshConversations,
     openConversation,
     send,
+    retryTurn,
     similar,
     refreshJobs,
     enqueue,

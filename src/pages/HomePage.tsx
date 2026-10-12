@@ -25,7 +25,6 @@ export function HomePage() {
   const navigate = useNavigate();
   const [draft, setDraft] = useState('');
   const [photo, setPhoto] = useState<PhotoPayload | null>(null);
-  const [error, setError] = useState('');
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   if (!store) return null;
@@ -38,7 +37,6 @@ export function HomePage() {
     if (!content && !withPhoto) return;
     setDraft('');
     setPhoto(null);
-    setError('');
     const running = store
       .send(content, {
         newConversation: true,
@@ -46,7 +44,6 @@ export function HomePage() {
       })
       .catch((caught) => {
         const message = friendlyError(caught);
-        setError(message);
         toast(message);
       });
     navigate('/chat');
@@ -61,6 +58,7 @@ export function HomePage() {
       </section>
 
       <ChatComposer
+        autoGrow={false}
         value={draft}
         photo={photo}
         busy={busy}
@@ -68,10 +66,7 @@ export function HomePage() {
         fileInputRef={photoInputRef}
         onPhotoChange={(next) => {setPhoto(next); if (next && !draft.trim()) setDraft(PHOTO_INTENTS[0].prompt);}}
         onSend={() => start(draft, photo)}
-        onError={(message) => {
-          setError(message);
-          toast(message);
-        }}
+        onError={toast}
       />
       {photo ? <div className="home__photo-intents" role="group" aria-label="拍题用途">
         {PHOTO_INTENTS.map(intent => <button key={intent.label} type="button" disabled={busy} aria-pressed={draft === intent.prompt} onClick={() => setDraft(intent.prompt)}>{intent.label}</button>)}
@@ -96,12 +91,6 @@ export function HomePage() {
         </div>
       </section>
 
-      {error ? (
-        <div className="notice notice--danger home__error" role="alert">
-          <Icon name="alert" size={17} />
-          <span>{error}</span>
-        </div>
-      ) : null}
 
       {recent.length ? (
         <section className="home__recent">

@@ -1,9 +1,11 @@
+import {useErrorToast} from "./Toast";
 import {useRef, useState} from 'react';
 import '../styles/inline-video.css';
 
 export function InlineVideo({title, loadPlayback}: {title:string; loadPlayback:()=>Promise<string>}) {
   const [src,setSrc]=useState(''),[loading,setLoading]=useState(false),[error,setError]=useState('');
   const pending=useRef(false);
+  useErrorToast(error);
   async function play() {
     if(pending.current)return;
     pending.current=true;setLoading(true);setError('');
@@ -18,7 +20,7 @@ export function InlineVideo({title, loadPlayback}: {title:string; loadPlayback:(
       <span className="inline-video__eyebrow">数学微课</span>
       <span className="inline-video__title">{title}</span>
       <span className="inline-video__play" aria-hidden="true">▶</span>
-      <span className="inline-video__hint" role={error?'alert':undefined}>{error || (loading?'正在加载视频…':'点击播放')}</span>
+      <span className="inline-video__hint">{error ? '重新播放' : (loading?'正在加载视频…':'点击播放')}</span>
     </button>}
   </div>;
 }
