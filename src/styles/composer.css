@@ -126,7 +126,50 @@
   width: 100%;
   max-width: var(--app-max);
   transform: translateX(-50%);
-  padding: var(--sp-3) var(--sp-3) calc(var(--sp-3) + env(safe-area-inset-bottom));
+  padding: var(--sp-3) var(--sp-3)
+    calc(var(--sp-3) + env(safe-area-inset-bottom));
   background: var(--canvas);
   border-top: 1px solid var(--line-soft);
+}
+
+.composer__icon--voice {
+  background: transparent;
+  color: var(--ink-2);
+}
+.composer__icon--voice:disabled {
+  opacity: 0.4;
+}
+.composer__icon--voice.is-recording {
+  color: #b64438;
+  background: #fff0ed;
+}
+.composer__voice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px 8px;
+  color: var(--ink-2);
+  font-size: 13px;
+}
+.composer__voice button {
+  margin-left: auto;
+  color: var(--brand);
+  padding: 4px 8px;
+}
+.composer__recording-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #c24e40;
+  animation: voice-pulse 1.2s ease-in-out infinite;
+}
+@keyframes voice-pulse {
+  50% {
+    opacity: 0.4;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .composer__recording-dot {
+    animation: none;
+  }
 }

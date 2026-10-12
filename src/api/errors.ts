@@ -13,6 +13,12 @@ export class ApiError extends Error {
 }
 
 const MESSAGES: Record<string, string> = {
+  SPEECH_NOT_CONFIGURED: '语音服务暂未配置',
+  SPEECH_RECOGNITION_FAILED: '语音识别失败，请重试',
+  SPEECH_EMPTY: '没有听清，请再说一次',
+  SPEECH_RATE_LIMITED: '语音使用较频繁，请稍后再试',
+  SPEECH_AUDIO_INVALID: '录音格式异常，请重新录音',
+  SPEECH_AUDIO_TOO_LONG: '录音最长60秒，请分段输入',
   NETWORK_ERROR: '无法连接服务，请检查网络和服务地址',
   SERVICE_NOT_CONFIGURED: '服务暂未配置',
   REQUEST_TOO_LARGE: '内容过长，请精简后重试',

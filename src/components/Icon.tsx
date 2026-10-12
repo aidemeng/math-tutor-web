@@ -1,6 +1,8 @@
 import type { SVGProps } from 'react';
 import {
   ArrowUp,
+  Mic,
+  Square,
   Share2,
   Copy,
   ExternalLink,
@@ -30,6 +32,8 @@ import {
 } from 'lucide-react';
 
 const ICONS = {
+  mic: Mic,
+  stop: Square,
   share: Share2,
   copy: Copy,
   external: ExternalLink,

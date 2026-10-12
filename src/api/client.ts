@@ -25,6 +25,7 @@ export interface MessageOptions {
 }
 
 export interface TutorClient {
+  transcribeSpeech(audio: ArrayBuffer, signal?: AbortSignal): Promise<{ text: string }>;
   loginPassword(username: string, password: string): Promise<SessionInfo>;
   register(username: string, password: string): Promise<SessionInfo>;
   me(): Promise<Me>;
@@ -214,6 +215,11 @@ export function createClient(options: { getToken: () => string | null }): TutorC
   }
 
   return {
+    transcribeSpeech: (audio, signal) => request('/v1/speech/transcribe', {
+      method: 'POST', body: audio,
+      signal: AbortSignal.any([AbortSignal.timeout(30000), ...(signal ? [signal] : [])]),
+      headers: { 'Content-Type': 'audio/wav' },
+    }),
     loginPassword: async (username, password) => ({...await request<Omit<SessionInfo,'token'>>('/v1/auth/password', {method:'POST',body:JSON.stringify({username,password})}),token:'cookie'}),
     register: async (username, password) => ({...await request<Omit<SessionInfo,'token'>>('/v1/auth/register', {method:'POST',body:JSON.stringify({username,password})}),token:'cookie'}),
     me: () => request<Me>('/v1/me'),
