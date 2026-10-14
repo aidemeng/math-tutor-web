@@ -8,6 +8,7 @@ interface ConfirmDialogProps {
   confirmText?: string;
   cancelText?: string;
   busy?: boolean;
+  confirmDisabled?: boolean;
   onConfirm(): void;
   onCancel(): void;
 }
@@ -20,6 +21,7 @@ export function ConfirmDialog({
   confirmText = '确认',
   cancelText = '取消',
   busy = false,
+  confirmDisabled = false,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -44,7 +46,7 @@ export function ConfirmDialog({
           <button type="button" className="btn btn--ghost dialog__btn" onClick={onCancel} disabled={busy}>
             {cancelText}
           </button>
-          <button type="button" className="btn btn--primary dialog__btn" onClick={onConfirm} disabled={busy}>
+          <button type="button" className="btn btn--primary dialog__btn" onClick={onConfirm} disabled={busy || confirmDisabled}>
             {busy ? '提交中…' : confirmText}
           </button>
         </div>

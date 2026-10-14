@@ -13,6 +13,29 @@
   margin-bottom: 0;
 }
 
+.credits-link {
+  margin-left: 12px;
+  padding: 2px 0;
+  color: var(--brand);
+  font-size: inherit;
+  font-weight: 550;
+}
+.credits-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+}
+.credits-form__hint {
+  margin: 0 0 4px;
+  color: var(--ink-3);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.credits-form .field {
+  font-variant-numeric: tabular-nums;
+}
+
 .spin {
   animation: spin 0.9s linear infinite;
 }

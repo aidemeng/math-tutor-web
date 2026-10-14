@@ -46,6 +46,7 @@ export interface TutorClient {
   fetchAsset(questionId: string, index: number, version: string): Promise<Blob>;
 
   credits(): Promise<{ available: number }>;
+  redeemCredits(code: string): Promise<{ available: number; added: number }>;
   createVideoJob(
     input: { questionId: string; bankVersion: string; requirements?: string },
     idempotencyKey: string,
@@ -256,6 +257,7 @@ export function createClient(options: { getToken: () => string | null }): TutorC
       ),
 
     credits: () => request('/v1/credits'),
+    redeemCredits: (code) => request('/v1/credits/redeem', { method: 'POST', body: JSON.stringify({ code }) }),
     createVideoJob: (input, key) =>
       request('/v1/video-jobs', {
         method: 'POST',

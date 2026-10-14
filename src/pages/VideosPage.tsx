@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useNavigate } from 'react-router-dom';
 import { friendlyError } from '../api/errors';
 import { Icon } from '../components/Icon';
@@ -21,8 +22,27 @@ export function VideosPage() {
   useStoreRevision();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
+  const [redeemOpen, setRedeemOpen] = useState(false);
+  const [code, setCode] = useState('');
+  const [redeeming, setRedeeming] = useState(false);
 
   const jobs = store?.state.jobs ?? [];
+
+  async function redeem(event?: FormEvent) {
+    event?.preventDefault();
+    if (!store || redeeming || !code.trim()) return;
+    setRedeeming(true);
+    try {
+      const added = await store.redeemCredits(code.trim());
+      setRedeemOpen(false);
+      setCode('');
+      toast(`兑换成功，已增加 ${added} 次视频额度`);
+    } catch (caught) {
+      toast(friendlyError(caught));
+    } finally {
+      setRedeeming(false);
+    }
+  }
 
   async function refresh() {
     if (!store || busy) return;
@@ -43,6 +63,7 @@ export function VideosPage() {
           <h2 className="page-head__title">讲解视频</h2>
           <p className="page-head__sub">
             剩余 <strong>{store?.state.credits ?? '—'}</strong> 次制作额度
+            <button type="button" className="credits-link" onClick={() => setRedeemOpen(true)}>兑换额度</button>
           </p>
         </div>
         <button type="button" className="iconbtn" onClick={() => void refresh()} disabled={busy} aria-label="刷新">
@@ -67,6 +88,17 @@ export function VideosPage() {
           ))}
         </ul>
       )}
+      <ConfirmDialog open={redeemOpen} title="兑换视频额度" confirmText="兑换 3 次额度"
+        busy={redeeming} confirmDisabled={!code.trim()} onConfirm={() => void redeem()}
+        onCancel={() => { if (!redeeming) setRedeemOpen(false); }} description={
+        <form className="credits-form" onSubmit={redeem}>
+          <p className="credits-form__hint">输入兑换码领取 3 次视频制作额度，每个码在同一账号仅可兑换一次。</p>
+          <label className="field-label" htmlFor="credit-code">兑换码</label>
+          <input id="credit-code" className="field" value={code} onChange={event => setCode(event.target.value)}
+            placeholder="8 位兑换码，如 K7TM-4R9X" autoFocus autoComplete="off" autoCapitalize="characters" spellCheck={false}
+            required maxLength={64} disabled={redeeming} />
+        </form>
+      } />
     </main>
   );
 }

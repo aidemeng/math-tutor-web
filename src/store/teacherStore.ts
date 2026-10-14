@@ -43,6 +43,7 @@ export interface TeacherStore {
   retryTurn(index: number): Promise<void>;
   similar(question: Question): Promise<void>;
   refreshJobs(): Promise<void>;
+  redeemCredits(code: string): Promise<number>;
   enqueue(
     question: Question,
     requirements?: string,
@@ -385,6 +386,25 @@ export function createTeacherStore(options: {
     }
   }
 
+  async function redeemCredits(code: string): Promise<number> {
+    const result = await client.redeemCredits(code).catch(async (error: unknown) => {
+      if (!disposed && error instanceof ApiError && error.code === 'CREDIT_CODE_REDEEMED') {
+        // The first response may have been lost after the grant committed.
+        // Invalidate pending reads before reconciling the authoritative balance.
+        jobsVersion++;
+        await refreshJobs();
+      }
+      throw error;
+    });
+    if (!disposed) {
+      jobsVersion++;
+      state.credits = result.available;
+      emit();
+      void refreshJobs().catch(() => {});
+    }
+    return result.added;
+  }
+
   async function refreshJobs(): Promise<void> {
     if (loadingJobs) return loadingJobs;
     loadingJobs = (async () => {
@@ -523,6 +543,7 @@ export function createTeacherStore(options: {
     retryTurn,
     similar,
     refreshJobs,
+    redeemCredits,
     enqueue,
     submitDraft,
     retry,

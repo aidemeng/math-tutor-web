@@ -13,6 +13,10 @@ export class ApiError extends Error {
 }
 
 const MESSAGES: Record<string, string> = {
+  CREDIT_CODE_INVALID: '兑换码无效，请检查或联系发放人',
+  CREDIT_CODE_REDEEMED: '你已兑换过这个码，额度已发放',
+  CREDIT_CODE_EXHAUSTED: '这个兑换码的使用次数已用完',
+  CREDIT_CODE_RATE_LIMITED: '兑换尝试较频繁，请稍后再试',
   SPEECH_NOT_CONFIGURED: '语音服务暂未配置',
   SPEECH_RECOGNITION_FAILED: '语音识别失败，请重试',
   SPEECH_EMPTY: '没有听清，请再说一次',
