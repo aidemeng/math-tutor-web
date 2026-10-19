@@ -67,12 +67,16 @@ export function QuestionCard({
 
       <h3 className="qcard__title">{question.title}</h3>
 
-      <div className="qcard__tags">
-        <span className="pill pill--plain">{question.kind}</span>
-        {question.level ? (
-          <span className="pill pill--plain">{question.level}</span>
-        ) : null}
-      </div>
+      {!question.source.includes(question.kind) || question.level ? (
+        <div className="qcard__tags">
+          {!question.source.includes(question.kind) ? (
+            <span className="pill pill--plain">{question.kind}</span>
+          ) : null}
+          {question.level ? (
+            <span className="pill pill--plain">{question.level}</span>
+          ) : null}
+        </div>
+      ) : null}
     </>
   );
   const content = (

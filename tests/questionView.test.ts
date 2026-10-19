@@ -44,3 +44,10 @@ describe("variant presentation and request", () => {
     expect(displayPrompt("这道题还能怎么改？")).toBe("这道题还能怎么改？");
   });
 });
+
+it('distinguishes solutions, variants and easier questions', () => {
+  expect(questionView({ ...question, kind: 'solution', source: '教师提供 · AI 解析' }).kind).toBe('AI 解析');
+  expect(questionView({ ...question, kind: 'variant' }).kind).toBe('AI 变式');
+  expect(questionView({ ...question, kind: 'easier' }).kind).toBe('AI 降难度');
+  expect(questionView({ ...question, kind: undefined }).kind).toBe('AI 生成');
+});

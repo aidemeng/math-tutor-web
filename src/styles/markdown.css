@@ -171,18 +171,18 @@
 }
 
 .md-block-math {
-  margin: 12px 0;
-  padding: 10px;
-  border-radius: var(--r-md);
-  background: var(--paper-sunken);
-  overflow-x: auto;
-  overflow-y: hidden;
+  margin: 6px 0;
 }
 .md-block-math .katex-display {
   margin: 0;
+  text-align: left;
 }
-.md-block-math .katex {
-  font-size: 1.12em;
+.md-block-math .katex-display > .katex {
+  text-align: left;
+  white-space: normal;
+  /* KaTeX keeps each mathematical group intact and permits breaks between groups. */
+  word-break: normal;
+  overflow-wrap: normal;
 }
 
 .md-math-error {

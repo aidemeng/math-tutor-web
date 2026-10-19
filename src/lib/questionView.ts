@@ -41,9 +41,7 @@ export function questionView(question: Question): QuestionView {
           .filter(Boolean)
           .join(" · ") || question.id,
     kind: generated
-      ? question.kind === "easier"
-        ? "AI 降难度"
-        : "AI 变式"
+      ? ({ solution: "AI 解析", variant: "AI 变式", easier: "AI 降难度" }[question.kind ?? ""] ?? "AI 生成")
       : "真题",
     level: LEVELS[question.difficulty ?? 0] ?? "",
     stem,

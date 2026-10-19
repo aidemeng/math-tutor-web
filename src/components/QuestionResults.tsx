@@ -54,11 +54,13 @@ export function QuestionResults({
                       {question.variationNote}
                     </span>
                   ) : null}
-                  <span className="question-list__meta">
-                    <span>{question.kind}</span>
-                    {question.level ? <span>{question.level}</span> : null}
-                    {question.review === "human" ? <span>已复核</span> : null}
-                  </span>
+                  {!question.source.includes(question.kind) || question.level || question.review === "human" ? (
+                    <span className="question-list__meta">
+                      {!question.source.includes(question.kind) ? <span>{question.kind}</span> : null}
+                      {question.level ? <span>{question.level}</span> : null}
+                      {question.review === "human" ? <span>已复核</span> : null}
+                    </span>
+                  ) : null}
                 </span>
                 <Icon name="chevron" size={16} aria-hidden="true" />
               </button>
