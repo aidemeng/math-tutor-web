@@ -28,6 +28,8 @@ import {
   TriangleAlert,
   Video,
   X,
+  ZoomIn,
+  ZoomOut,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -43,6 +45,8 @@ const ICONS = {
   history: History,
   back: ChevronLeft,
   close: X,
+  'zoom-in': ZoomIn,
+  'zoom-out': ZoomOut,
   plus: Plus,
   send: ArrowUp,
   camera: Camera,

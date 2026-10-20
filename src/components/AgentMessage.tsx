@@ -1,8 +1,9 @@
 import { useApp, useStoreRevision } from "../store/AppContext";
 import { Markdown } from "./Markdown";
+import { AgentProgress } from "./AgentProgress";
 import { BrandLogo } from "./BrandLogo";
 import "../styles/chat.css";
-import {Children, type ReactNode} from "react";
+import { Children, type ReactNode } from "react";
 
 interface AgentMessageProps {
   turnIndex: number;
@@ -44,12 +45,11 @@ export function AgentMessage({
           <div className="agent__bubble">
             {reply ? <Markdown value={reply} streaming={streaming} /> : null}
             {streaming ? (
-              <div className="agent__typing">
-                <span className="agent__dot" />
-                <span className="agent__dot" />
-                <span className="agent__dot" />
-                {label ? <span className="agent__status">{label}</span> : null}
-              </div>
+              <AgentProgress
+                status={label || undefined}
+                startedAt={turn.startedAt}
+                lastActivityAt={turn.lastActivityAt}
+              />
             ) : null}
           </div>
         ) : null}

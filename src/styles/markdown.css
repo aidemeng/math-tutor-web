@@ -170,8 +170,22 @@
   font-size: 1.05em;
 }
 
+.md-inline-math {
+  display: inline-block;
+  max-width: 100%;
+  padding: 0.25em 0.04em;
+  vertical-align: middle;
+  overflow-x: auto;
+  overflow-y: hidden;
+  line-height: normal;
+}
+.md-inline-math .katex-html { white-space: nowrap; }
+
 .md-block-math {
-  margin: 6px 0;
+  margin: 12px 0;
+  padding: 6px 0;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 .md-block-math .katex-display {
   margin: 0;
@@ -179,8 +193,8 @@
 }
 .md-block-math .katex-display > .katex {
   text-align: left;
-  white-space: normal;
-  /* KaTeX keeps each mathematical group intact and permits breaks between groups. */
+  white-space: nowrap;
+  /* Keep fractions and aligned steps intact; wide equations scroll within the block. */
   word-break: normal;
   overflow-wrap: normal;
 }

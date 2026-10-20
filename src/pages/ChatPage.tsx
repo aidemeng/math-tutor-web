@@ -1,3 +1,4 @@
+import { UserMessage } from "../components/UserMessage";
 import {TurnError} from "../components/TurnError";
 import { VideoDraftCard } from "../components/VideoDraftCard";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -62,6 +63,11 @@ export function ChatPage() {
     setConversationError("");
   }, [id, store]);
 
+  // Bind completed new conversations to their saved URL so refreshing can restore them.
+  useEffect(() => {
+    if (!id && activeId && !storeBusy) navigate(`/chat/${activeId}`, { replace: true });
+  }, [id, activeId, storeBusy, navigate]);
+
   // Wait for an existing reply/history request, then load the conversation in the URL.
   useEffect(() => {
     if (
@@ -73,6 +79,7 @@ export function ChatPage() {
     )
       return;
     openedRef.current = id;
+    if (store.state.activeId === id && store.state.turns.length > 0) return;
     store.openConversation(id).catch((caught) => {
       if (openedRef.current !== id) return;
       openedRef.current = null;
@@ -234,17 +241,7 @@ export function ChatPage() {
           const keys = turn.questions.map((item) => questionView(item).key);
           return (
             <section className="turn" key={`${index}-${turn.prompt}`}>
-              <div className="turn__user">
-                {turn.photo ? (
-                  <img
-                    className="turn__photo"
-                    src={turn.photo}
-                    alt="题目照片"
-                  />
-                ) : null}
-                <p className="turn__prompt">{turn.prompt}</p>
-              </div>
-
+              <UserMessage photo={turn.photo} prompt={turn.prompt} />
               <AgentMessage turnIndex={index} conversationId={activeId ?? ""}>
                 {keys.length ? (
                   <div

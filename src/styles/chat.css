@@ -63,13 +63,25 @@
   animation: riseIn var(--t-base) var(--ease-out);
 }
 
+.turn__photo-link {
+  display: block;
+  align-self: flex-end;
+  max-width: min(68%, 240px);
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  cursor: zoom-in;
+  overflow: hidden;
+  animation: riseIn var(--t-base) var(--ease-out);
+}
 .turn__photo {
   display: block;
-  width: 164px;
+  width: auto;
+  height: auto;
   max-width: 100%;
-  margin-bottom: 7px;
-  border-radius: var(--r-sm);
-  border: 1px solid var(--line-soft);
+  max-height: 280px;
+  object-fit: contain;
 }
 
 .turn__prompt {
@@ -322,3 +334,7 @@
   outline: 2px solid var(--brand);
   outline-offset: -2px;
 }
+
+.agent__typing { flex-wrap: wrap; row-gap: 6px; }
+.agent__elapsed { margin-left: auto; padding-left: 10px; font-size: 11px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.agent__slow { margin: 7px 0 0; color: var(--ink-3); font-size: 12px; line-height: 1.6; }

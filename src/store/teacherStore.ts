@@ -129,6 +129,7 @@ export function createTeacherStore(options: {
   }
 
   function applyEvent(turn: Turn, event: AgentEvent): void {
+    turn.lastActivityAt = Date.now();
     if (event.type === "video_draft") turn.videoDraft = event.draft;
     if (event.type === "video_job") {
       const i = state.jobs.findIndex((j) => j.id === event.job.id);
@@ -146,12 +147,16 @@ export function createTeacherStore(options: {
       turn.reply = event.text;
     if (event.type === "question") {
       questionView(event.question);
-      const exists = turn.questions.some(
+      const existing = turn.questions.findIndex(
         (item) =>
           item.id === event.question.id &&
-          item.bankVersion === event.question.bankVersion,
+          item.bankVersion === event.question.bankVersion ||
+          (item.kind === "solution" && event.question.kind === "solution" &&
+            !!item.photoId && item.photoId === event.question.photoId &&
+            item.stem === event.question.stem),
       );
-      if (!exists) turn.questions.push(event.question);
+      if (existing < 0) turn.questions.push(event.question);
+      else turn.questions[existing] = event.question;
     }
     if (event.type === "error")
       turn.error = String(event.error || "AGENT_FAILED");
@@ -252,12 +257,6 @@ export function createTeacherStore(options: {
         }
       }
 
-      for (const turn of turns) {
-        if (turn.questions.length && turn.reply.length > 160) {
-          turn.reply = "题目已找到，解析和后续操作见题卡。";
-        }
-      }
-
       state.activeId = id;
       state.turns = turns;
       emit();
@@ -312,6 +311,8 @@ export function createTeacherStore(options: {
       }
 
       turn = {
+        startedAt: Date.now(),
+        lastActivityAt: Date.now(),
         prompt: displayPrompt(content),
         requestText: content,
         selectedQuestion: settings.selectedQuestion,

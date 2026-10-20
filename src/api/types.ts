@@ -93,7 +93,7 @@ export interface Me {
 /** SSE 事件协议。 */
 export type AgentEvent =
   | { type: 'text'; text: string }
-  | { type: 'status'; text: string }
+  | { type: 'status'; text: string; phase?: string }
   | { type: 'text_reset'; text: string }
   | { type: 'question'; question: Question }
   | { type: 'video_draft'; draft: VideoDraft }
@@ -111,6 +111,8 @@ export interface Turn {
   photo?: string;
   reply: string;
   status?: string;
+  startedAt?: number;
+  lastActivityAt?: number;
   questions: Question[];
   error: string | null;
 }

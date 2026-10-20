@@ -60,7 +60,7 @@ function createMarked(): Marked {
           return { type: 'inlineMath', raw: match[0], text: (match[1] ?? match[2] ?? '').trim() } as never;
         },
         renderer(token: Tokens.Generic) {
-          return renderMath(String(token.text), false);
+          return `<span class="md-inline-math">${renderMath(String(token.text), false)}</span>`;
         },
       },
     ],
