@@ -118,3 +118,20 @@ export interface Turn {
 }
 
 export interface VideoDraft {id:string;mode:'question'|'method';title:string;requirements:string;script:string;examples:{purpose:string;question:Question}[];createdAt:number;}
+
+export interface QuestionAnnotation {
+  section: 'question' | 'analysis';
+  quote: string;
+  title: string;
+  explanation: string;
+}
+export interface GuideContent {annotations: QuestionAnnotation[];}
+export interface TeachingGuide {
+  id: string;
+  questionId: string;
+  bankVersion: string;
+  studentContext: string;
+  status: 'generating' | 'ready' | 'failed';
+  content: GuideContent | null;
+  updatedAt: number;
+}

@@ -10,7 +10,7 @@ import { useApp, useStoreRevision } from '../store/AppContext';
 import '../styles/home.css';
 
 const EXAMPLES = [
-  { kind: '拍题解析', label: '拍一道题，找相似题或看解析', prompt: '' },
+  { kind: '解题讲解', label: '上传题目，看答案与思路', prompt: '' },
   { kind: '真题检索', label: '找一道用配方法求最值的中考真题', prompt: '找一道用配方法求最值的中考真题' },
   { kind: '方法微课', label: '讲讲“切线连半径”，配一道真题做成视频', prompt: '为九年级学生准备约2分钟的“切线连半径”方法微课：讲清何时连、为什么连和常见误区，配一道题库真题演示方法。先检索并精读题目与解析；没有合适例题就明确说明，不编造。保存讲解稿供我预览，确认后再制作视频。' },
 ];
@@ -73,7 +73,7 @@ export function HomePage() {
       </div> : null}
 
       <section className="home__examples">
-        <p className="home__section-label">试试这样问</p>
+        <p className="home__section-label">开始新的备课</p>
         <div className="home__chips">
           {EXAMPLES.map((example) => (
             <button
@@ -83,9 +83,10 @@ export function HomePage() {
               disabled={busy}
               onClick={() => example.prompt ? start(example.prompt, null) : photoInputRef.current?.click()}
             >
+              <Icon name={example.kind === "解题讲解" ? "book" : example.kind === "真题检索" ? "history" : "square-play"} size={25} />
               <span className="home__chip-kind">{example.kind}</span>
               <span className="home__chip-text">{example.label}</span>
-              <Icon name="chevron" size={15} />
+
             </button>
           ))}
         </div>

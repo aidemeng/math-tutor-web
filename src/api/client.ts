@@ -1,5 +1,6 @@
 import { ApiError } from './errors';
 import type {
+  TeachingGuide,
   AgentEvent,
   Conversation,
   ConversationDetail,
@@ -25,6 +26,8 @@ export interface MessageOptions {
 }
 
 export interface TutorClient {
+  getTeachingGuide(questionId: string, bankVersion: string, studentContext?: string): Promise<{guide: TeachingGuide | null}>;
+  generateTeachingGuide(input: {questionId: string; bankVersion: string; studentContext: string; regenerate?: boolean}): Promise<{guide: TeachingGuide}>;
   transcribeSpeech(audio: ArrayBuffer, signal?: AbortSignal): Promise<{ text: string }>;
   loginPassword(username: string, password: string): Promise<SessionInfo>;
   register(username: string, password: string): Promise<SessionInfo>;
@@ -217,6 +220,8 @@ export function createClient(options: { getToken: () => string | null }): TutorC
   }
 
   return {
+    getTeachingGuide: (questionId, bankVersion, studentContext) => request(`/v1/teaching-guides${query({questionId,bankVersion})}${studentContext === undefined ? "" : "&studentContext=" + encodeURIComponent(studentContext)}`),
+    generateTeachingGuide: (input) => request('/v1/teaching-guides', {method:'POST',body:JSON.stringify(input)}),
     transcribeSpeech: (audio, signal) => request('/v1/speech/transcribe', {
       method: 'POST', body: audio,
       signal: AbortSignal.any([AbortSignal.timeout(30000), ...(signal ? [signal] : [])]),

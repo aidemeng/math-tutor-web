@@ -13,6 +13,8 @@ import { Marked, type Tokens } from 'marked';
 
 const katexOptions: KatexOptions = { throwOnError: false, strict: false, output: 'htmlAndMathml' };
 
+const mathAttribute = (tex: string) => tex.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
 function renderMath(tex: string, displayMode: boolean): string {
   try {
     return katex.renderToString(tex, { ...katexOptions, displayMode });
@@ -44,7 +46,7 @@ function createMarked(): Marked {
           return { type: 'blockMath', raw: match[0], text: (match[1] ?? match[2] ?? '').trim() } as never;
         },
         renderer(token: Tokens.Generic) {
-          return `<div class="md-block-math">${renderMath(String(token.text), true)}</div>`;
+          return `<div class="md-block-math" data-math-tex="${mathAttribute(String(token.text))}">${renderMath(String(token.text), true)}</div>`;
         },
       },
       {
@@ -60,7 +62,7 @@ function createMarked(): Marked {
           return { type: 'inlineMath', raw: match[0], text: (match[1] ?? match[2] ?? '').trim() } as never;
         },
         renderer(token: Tokens.Generic) {
-          return `<span class="md-inline-math">${renderMath(String(token.text), false)}</span>`;
+          return `<span class="md-inline-math" data-math-tex="${mathAttribute(String(token.text))}">${renderMath(String(token.text), false)}</span>`;
         },
       },
     ],
@@ -103,7 +105,7 @@ const marked = createMarked();
 
 const PURIFY_CONFIG: Config = {
   USE_PROFILES: { html: true, svg: true, svgFilters: true, mathMl: true },
-  ADD_ATTR: ['data-asset', 'aria-hidden'],
+  ADD_ATTR: ['data-asset', 'data-math-tex', 'aria-hidden'],
   FORBID_TAGS: ['style', 'script', 'iframe', 'object', 'embed', 'form', 'input', 'textarea'],
   FORBID_ATTR: ['onerror', 'onload', 'onclick'],
 };

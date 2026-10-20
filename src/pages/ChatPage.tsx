@@ -1,7 +1,8 @@
+import { QuestionAnnotations } from '../components/QuestionAnnotations';
 import { UserMessage } from "../components/UserMessage";
 import {TurnError} from "../components/TurnError";
 import { VideoDraftCard } from "../components/VideoDraftCard";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { friendlyError } from "../api/errors";
 import { AgentMessage } from "../components/AgentMessage";
@@ -16,26 +17,34 @@ import { Sheet } from "../components/Sheet";
 import { toast, useErrorToast } from "../components/Toast";
 import { derivePrompt, questionView } from "../lib/questionView";
 import type { PhotoPayload } from "../lib/photo";
+import { quotedQuestionMessage, type QuestionQuote } from "../lib/questionQuote";
 import { useApp, useStoreRevision } from "../store/AppContext";
 import "../styles/chat.css";
 
 const EMPTY_HINT = "发来一道题，我们一起备课";
 
 export function ChatPage() {
-  const { store } = useApp();
+  const { store, client } = useApp();
   const revision = useStoreRevision();
   const { id } = useParams();
   const navigate = useNavigate();
 
   const [draft, setDraft] = useState("");
   const [photo, setPhoto] = useState<PhotoPayload | null>(null);
+  const [quote, setQuote] = useState<QuestionQuote | null>(null);
+  const composerInputRef = useRef<HTMLTextAreaElement>(null);
+  const [annotationActions, setAnnotationActions] = useState<HTMLDivElement | null>(null);
   const [detailKey, setDetailKey] = useState<string | null>(null);
   const [readerTab, setReaderTab] = useState<"question" | "analysis">(
     "question",
   );
   const readerRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    readerRef.current?.parentElement?.scrollTo({ top: 0 });
+  const readerPositions = useRef<Record<string, number>>({});
+  useLayoutEffect(() => {
+    const scroller = readerRef.current?.parentElement;
+    const key = `${detailKey}:${readerTab}`;
+    scroller?.scrollTo({top: readerPositions.current[key] ?? 0});
+    return () => {if (scroller) readerPositions.current[key] = scroller.scrollTop;};
   }, [detailKey, readerTab]);
   const [videoKey, setVideoKey] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -61,6 +70,7 @@ export function ChatPage() {
   useEffect(() => {
     openedRef.current = null;
     setConversationError("");
+    setQuote(null);
   }, [id, store]);
 
   // Bind completed new conversations to their saved URL so refreshing can restore them.
@@ -134,12 +144,22 @@ export function ChatPage() {
     if (!store) return;
     const text = draft.trim();
     if (!text && !photo) return;
+    const message = quote ? quotedQuestionMessage(quote, text) : text;
+    if (message.length > 4000) {
+      report("引用和问题合计过长，请缩短问题或重新选取较短片段");
+      return;
+    }
     setDraft("");
     followRef.current = true;
     const payload = photo;
+    const quoted = quote;
     setPhoto(null);
+    setQuote(null);
     try {
-      await store.send(text, payload ? { photo: payload } : {});
+      await store.send(message, {
+        ...(payload ? { photo: payload } : {}),
+        ...(quoted ? { selectedQuestion: {id: quoted.questionId, bankVersion: quoted.bankVersion} } : {}),
+      });
     } catch (caught) {
       report(friendlyError(caught));
     }
@@ -274,11 +294,18 @@ export function ChatPage() {
       </main>
 
       <div className="composer-dock">
+        {quote && <div className="question-quote" role="group" aria-label="待发送的引用">
+          <div><span className="question-quote__source">引用{quote.section === "question" ? "题目" : "解析"} · {quote.source}</span>
+            <div className="question-quote__text"><Markdown value={quote.text} /></div>
+          </div>
+          <button type="button" className="iconbtn iconbtn--plain" aria-label="移除引用" onClick={() => setQuote(null)}><Icon name="close" size={16} /></button>
+        </div>}
         <ChatComposer
+          inputRef={composerInputRef}
           value={draft}
           photo={photo}
           busy={busy}
-          placeholder="继续说说这道题，或补充要求"
+          placeholder={quote ? "想问这一步的什么？" : "继续说说这道题，或补充要求"}
           onChange={setDraft}
           onPhotoChange={setPhoto}
           onSend={() => void send()}
@@ -291,6 +318,7 @@ export function ChatPage() {
         title="题目与解析"
         onClose={() => setDetailKey(null)}
         navigation={
+          <div className="question-reader__navigation">
           <div
             className="question-reader__tabs"
             role="tablist"
@@ -313,14 +341,8 @@ export function ChatPage() {
                     )
                   ) {
                     event.preventDefault();
-                    const next =
-                      event.key === "Home"
-                        ? "question"
-                        : event.key === "End"
-                          ? "analysis"
-                          : index === 0
-                            ? "analysis"
-                            : "question";
+                    const tabs = ["question", "analysis"] as const;
+                    const next = tabs[event.key === "Home" ? 0 : event.key === "End" ? 1 : (index + 1) % 2];
                     setReaderTab(next);
                     document.getElementById(`reader-tab-${next}`)?.focus();
                   }
@@ -329,6 +351,8 @@ export function ChatPage() {
                 {tab === "question" ? "题目" : "解析"}
               </button>
             ))}
+          </div>
+          <div className="question-reader__actions" ref={setAnnotationActions} />
           </div>
         }
         footer={
@@ -354,6 +378,14 @@ export function ChatPage() {
             id={`reader-panel-${readerTab}`}
             aria-labelledby={`reader-tab-${readerTab}`}
           >
+            {detail && <QuestionAnnotations key={detail.key} question={detail} section={readerTab} client={client}
+              actionsTarget={annotationActions}
+              onQuote={(text) => {
+                setQuote({questionId: detail.id, bankVersion: detail.bankVersion, source: detail.source,
+                  section: readerTab, text});
+                setDetailKey(null);
+                requestAnimationFrame(() => composerInputRef.current?.focus());
+              }}>
             {detailKey && readerTab === "question" ? (
               <QuestionCard
                 questionKey={detailKey}
@@ -364,7 +396,7 @@ export function ChatPage() {
                 }}
               />
             ) : detail ? (
-              <>
+              <div className="question-reader__analysis">
                 <div className="sheet__meta">
                   <span className="pill pill--plain">{detail.source}</span>
                 </div>
@@ -374,8 +406,9 @@ export function ChatPage() {
                   value={detail.explanation || detail.answer || "暂无解析"}
                   questionKey={detailKey ?? undefined}
                 />
-              </>
+              </div>
             ) : null}
+            </QuestionAnnotations>}
           </div>
         </div>
       </Sheet>

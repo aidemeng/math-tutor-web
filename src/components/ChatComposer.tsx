@@ -18,6 +18,7 @@ interface ComposerProps {
   onSend(): void;
   onError(message: string): void;
   fileInputRef?: RefObject<HTMLInputElement | null>;
+  inputRef?: RefObject<HTMLTextAreaElement | null>;
 }
 
 /**
@@ -36,8 +37,10 @@ export function ChatComposer({
   onSend,
   onError,
   fileInputRef,
+  inputRef,
 }: ComposerProps) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const internalTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const textareaRef = inputRef || internalTextareaRef;
   const internalFileRef = useRef<HTMLInputElement>(null);
   const fileRef = fileInputRef || internalFileRef;
 

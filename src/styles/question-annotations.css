@@ -1,0 +1,126 @@
+.annotation-reader__generate {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  padding: 6px 8px;
+  min-height: 36px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--brand);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.annotation-reader__generate:hover { background: var(--brand-soft); }
+.question-selection-action {
+  position: fixed;
+  z-index: 195;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--brand);
+  box-shadow: 0 3px 12px rgba(20, 45, 35, .10);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.annotation-reader .md::selection,
+.annotation-reader .md *::selection {
+  background: var(--brand-ring);
+  color: inherit;
+}
+.annotation-reader--selecting .md::selection,
+.annotation-reader--selecting .md *::selection {
+  background: transparent;
+}
+.question-selection-paint { position: fixed; inset: 0; z-index: 180; pointer-events: none; }
+.question-selection-paint span {
+  position: absolute;
+  background: var(--brand-ring);
+  border-radius: 4px;
+}
+.annotation-reader__generate:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.annotation-anchor {
+  padding-bottom: 5px;
+  background-color: var(--brand-soft-2);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='4' viewBox='0 0 8 4'%3E%3Cpath d='M0 2Q2 0 4 2T8 2' fill='none' stroke='%2315704e' stroke-width='1.4'/%3E%3C/svg%3E");
+  background-size: 8px 4px;
+  background-position: left bottom;
+  background-repeat: repeat-x;
+  text-decoration: none;
+  border-radius: 3px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  cursor: pointer;
+}
+.annotation-anchor:hover,
+.annotation-anchor--active {
+  background-color: var(--brand-soft);
+}
+.annotation-reader--has-active .annotation-anchor:not(.annotation-anchor--active) {
+  background-color: transparent;
+}
+.annotation-popover {
+  position: fixed;
+  z-index: 190;
+  box-sizing: border-box;
+  width: min(340px, calc(100vw - 32px));
+  max-height: min(360px, calc(100dvh - 32px));
+  overflow: auto;
+  padding: 14px 16px 17px;
+  border: 1px solid var(--line-soft);
+  border-radius: 16px;
+  background: var(--paper);
+  box-shadow: 0 8px 32px rgba(20, 45, 35, 0.16);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.65;
+  outline: none;
+}
+.annotation-popover__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 11px;
+  color: var(--ink-2);
+}
+.annotation-popover__header button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--paper-sunken);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.annotation-popover__title {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.annotation-popover section + section {
+  margin-top: 18px;
+}
+.annotation-popover .md p {
+  margin: 0 0 8px;
+}
+.annotation-anchor:focus-visible,
+.annotation-reader__generate:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 3px;
+}

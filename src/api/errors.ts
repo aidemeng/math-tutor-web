@@ -13,6 +13,7 @@ export class ApiError extends Error {
 }
 
 const MESSAGES: Record<string, string> = {
+  GUIDE_RATE_LIMITED: '批注准备较频繁，请稍等片刻再试',
   CREDIT_CODE_INVALID: '兑换码无效，请检查或联系发放人',
   CREDIT_CODE_REDEEMED: '你已兑换过这个码，额度已发放',
   CREDIT_CODE_EXHAUSTED: '这个兑换码的使用次数已用完',

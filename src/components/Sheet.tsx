@@ -52,6 +52,7 @@ export function Sheet({
   if (!open) return null;
 
   const onTouchStart = (event: TouchEvent) => {
+    if ((event.target as Element).closest(".md,button,input,textarea")) return;
     // 内容已滚到顶部时，才把下滑手势交给抽屉
     if ((bodyRef.current?.scrollTop ?? 0) > 0) return;
     startY.current = event.touches[0].clientY;
