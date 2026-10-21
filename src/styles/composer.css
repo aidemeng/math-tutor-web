@@ -6,7 +6,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
-  padding: 8px;
+  padding: 6px;
   border-radius: var(--r-2xl);
   background: var(--paper);
   border: 1px solid var(--line-strong);
@@ -33,7 +33,7 @@
   padding: 9px 4px;
   border: 0;
   background: none;
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1.5;
   resize: none;
   outline: none;
@@ -55,8 +55,8 @@
   display: grid;
   place-items: center;
   flex: none;
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   transition:
     transform var(--t-fast) var(--ease-out),
@@ -65,6 +65,10 @@
 }
 .composer__icon:active:not(:disabled) {
   transform: scale(0.92);
+}
+.composer__icon svg {
+  width: 18px;
+  height: 18px;
 }
 .composer__icon:disabled {
   cursor: not-allowed;
@@ -153,7 +157,7 @@
   gap: 8px;
   flex: 1;
   min-width: 0;
-  height: 40px;
+  height: 34px;
   padding: 0 4px;
   white-space: nowrap;
   color: var(--ink-2);
@@ -194,8 +198,8 @@
 
 .composer__row--expanded {
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) 40px 40px;
-  gap: 6px;
+  grid-template-columns: 34px minmax(0, 1fr) 34px 34px;
+  gap: 4px 6px;
   align-items: center;
 }
 .composer__row--expanded .composer__field {
@@ -220,6 +224,13 @@
   grid-column: 4;
   grid-row: 2;
 }
+.composer__row--voice .composer__voice {
+  grid-column: 1 / 4;
+  grid-row: 2;
+}
+.composer__row--voice .composer__icon--voice {
+  grid-column: 4;
+}
 .composer__field--fixed {
   align-items: center;
   height: 42px;
@@ -230,4 +241,21 @@
   min-height: 24px;
   max-height: 24px;
   padding: 0;
+}
+
+.composer__row--expanded .composer__field--multiline {
+  height: 52px;
+}
+.composer__row--expanded .composer__input--multiline {
+  height: 52px;
+  min-height: 52px;
+  max-height: 52px;
+  padding: 4px;
+  line-height: 22px;
+}
+.composer__row--expanded .composer__input--limited {
+  min-height: 30px;
+  max-height: 96px;
+  padding: 4px;
+  line-height: 22px;
 }

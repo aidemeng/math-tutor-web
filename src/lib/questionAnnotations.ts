@@ -48,8 +48,21 @@ export function wrapAnnotationQuote(block: HTMLElement, quote: string): HTMLElem
   if (lastMath && lastMath !== block && block.contains(lastMath)) range.setEndAfter(lastMath);
   else range.setEnd(last.node, last.end);
   if (firstMath === block || lastMath === block) range.selectNodeContents(block);
-  // Avoid nested interactive annotations when two model quotes overlap.
-  if (Array.from(block.querySelectorAll(".annotation-anchor")).some(node => range.intersectsNode(node))) return null;
+  // Merge overlapping highlights, including quotes expanded to a whole formula.
+  // Keep the full existing range so neither annotation loses its original text.
+  const overlaps = Array.from(block.querySelectorAll(".annotation-anchor"))
+    .filter(node => range.intersectsNode(node));
+  for (const node of overlaps) {
+    const existing = document.createRange();
+    existing.selectNode(node);
+    if (range.compareBoundaryPoints(Range.START_TO_START, existing) > 0)
+      range.setStartBefore(node);
+    if (range.compareBoundaryPoints(Range.END_TO_END, existing) < 0)
+      range.setEndAfter(node);
+  }
+  // Unwrap first to avoid nesting interactive spans inside the merged anchor.
+  for (const node of overlaps)
+    node.replaceWith(...Array.from(node.childNodes));
   const anchor = document.createElement("span");
   anchor.className = "annotation-anchor";
   anchor.append(range.extractContents());

@@ -9,6 +9,36 @@
   padding-top: var(--sp-4);
 }
 
+.chat__composer-intents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.chat__composer-intents button {
+  flex: 0 0 auto;
+  min-height: 32px;
+  padding: 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink-2);
+  font-size: 12px;
+  line-height: 20px;
+}
+.chat__composer-intents button[aria-pressed='true'] {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+.chat__composer-intents button:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+.chat__composer-intents button:disabled {
+  opacity: .5;
+}
+
 .chat__notice {
   display: flex;
   align-items: center;

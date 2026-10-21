@@ -18,6 +18,7 @@ import { toast, useErrorToast } from "../components/Toast";
 import { derivePrompt, questionView } from "../lib/questionView";
 import type { PhotoPayload } from "../lib/photo";
 import { quotedQuestionMessage, type QuestionQuote } from "../lib/questionQuote";
+import { COMPOSER_INTENTS, type ComposerIntentId } from "../lib/composerIntents";
 import { useApp, useStoreRevision } from "../store/AppContext";
 import "../styles/chat.css";
 
@@ -55,6 +56,59 @@ export function ChatPage() {
   const followRef = useRef(true);
   const hydratedRef = useRef<string | null>(null);
   const mainRef = useRef<HTMLElement>(null);
+  const dockRef = useRef<HTMLDivElement>(null);
+
+  // Mobile keyboards can shrink only the visual viewport, leaving fixed
+  // elements and the document's layout viewport behind the keyboard.
+  useLayoutEffect(() => {
+    const main = mainRef.current;
+    const dock = dockRef.current;
+    const input = composerInputRef.current;
+    if (!main || !dock || !input) return;
+    const viewport = window.visualViewport;
+    const previousBottom = dock.style.bottom;
+    const previousPadding = main.style.paddingBottom;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      // Pinch zoom changes the visual viewport too; it is not a keyboard inset.
+      const inset = viewport && Math.abs(viewport.scale - 1) < 0.01
+        ? Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)
+        : 0;
+      dock.style.bottom = `${inset}px`;
+      // Include attachments, quoted text and an expanded draft in the reserved
+      // space so the last message can always scroll above the whole composer.
+      main.style.paddingBottom = `${inset + dock.getBoundingClientRect().height + 12}px`;
+      if (followRef.current)
+        window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'auto' });
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    const focus = () => {
+      followRef.current = true;
+      schedule();
+    };
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(schedule) : null;
+    observer?.observe(dock);
+    viewport?.addEventListener('resize', schedule);
+    viewport?.addEventListener('scroll', schedule);
+    window.addEventListener('resize', schedule);
+    input.addEventListener('focus', focus);
+    input.addEventListener('blur', schedule);
+    update();
+    return () => {
+      cancelAnimationFrame(frame);
+      observer?.disconnect();
+      viewport?.removeEventListener('resize', schedule);
+      viewport?.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+      input.removeEventListener('focus', focus);
+      input.removeEventListener('blur', schedule);
+      dock.style.bottom = previousBottom;
+      main.style.paddingBottom = previousPadding;
+    };
+  }, [!!store]);
 
   const activeId = store?.state.activeId ?? null;
   const waitingForConversation = !!id && activeId !== id;
@@ -140,6 +194,18 @@ export function ChatPage() {
 
   if (!store) return null;
 
+  function selectComposerIntent(intent: ComposerIntentId) {
+    const previous = Object.values(COMPOSER_INTENTS).find(item => draft.startsWith(item.prompt));
+    const supplement = previous ? draft.slice(previous.prompt.length).trimStart() : draft.trim();
+    const next = [COMPOSER_INTENTS[intent].prompt, supplement].filter(Boolean).join('\n');
+    if (next.length > 4000) {
+      report('输入内容较长，请先精简一些文字再切换用途');
+      return;
+    }
+    setDraft(next);
+    requestAnimationFrame(() => composerInputRef.current?.focus());
+  }
+
   async function send() {
     if (!store) return;
     const text = draft.trim();
@@ -149,6 +215,7 @@ export function ChatPage() {
       report("引用和问题合计过长，请缩短问题或重新选取较短片段");
       return;
     }
+    composerInputRef.current?.blur();
     setDraft("");
     followRef.current = true;
     const payload = photo;
@@ -214,6 +281,7 @@ export function ChatPage() {
   const detail = detailRaw ? safeView(detailRaw) : null;
   const videoRaw = videoKey ? store.question(videoKey) : null;
   const videoQuestion = videoRaw ? safeView(videoRaw) : null;
+  const composerIntents: ComposerIntentId[] = ['search', 'diagnosis', 'analysis', 'method'];
 
   return (
     <>
@@ -293,7 +361,16 @@ export function ChatPage() {
 
       </main>
 
-      <div className="composer-dock">
+      <div className="composer-dock" ref={dockRef}>
+        {!quote && <div className="chat__composer-intents" role="group" aria-label="提问用途">
+          {composerIntents.map(intent => (
+            <button key={intent} type="button" disabled={busy}
+              aria-pressed={draft.startsWith(COMPOSER_INTENTS[intent].prompt)}
+              onClick={() => selectComposerIntent(intent)}>
+              {COMPOSER_INTENTS[intent].label}
+            </button>
+          ))}
+        </div>}
         {quote && <div className="question-quote" role="group" aria-label="待发送的引用">
           <div><span className="question-quote__source">引用{quote.section === "question" ? "题目" : "解析"} · {quote.source}</span>
             <div className="question-quote__text"><Markdown value={quote.text} /></div>
@@ -302,6 +379,7 @@ export function ChatPage() {
         </div>}
         <ChatComposer
           inputRef={composerInputRef}
+          maxRows={4}
           value={draft}
           photo={photo}
           busy={busy}

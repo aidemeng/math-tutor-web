@@ -12,6 +12,8 @@ interface ComposerProps {
   busy?: boolean;
   autoFocus?: boolean;
   autoGrow?: boolean;
+  maxRows?: 4 | 6;
+  fixedRows?: 1 | 2;
   placeholder?: string;
   onChange(value: string): void;
   onPhotoChange(photo: PhotoPayload | null): void;
@@ -31,6 +33,8 @@ export function ChatComposer({
   busy = false,
   autoFocus = false,
   autoGrow = true,
+  maxRows = 6,
+  fixedRows = 1,
   placeholder = "输入题干或备课需求",
   onChange,
   onPhotoChange,
@@ -83,6 +87,9 @@ export function ChatComposer({
   }, [busy]);
   const inputBusy = busy || voiceState !== "idle";
   const canSend = !inputBusy && (value.trim().length > 0 || !!photo);
+  const fixedMultiline = !autoGrow && fixedRows > 1;
+  const limitedGrow = autoGrow && maxRows === 4;
+  const stacked = fixedMultiline || limitedGrow;
 
   // Empty placeholders never grow the field. Keep long drafts expanded while
   // editing so switching to the wider text row cannot cause layout oscillation.
@@ -92,13 +99,13 @@ export function ChatComposer({
     const resize = () => {
       if (!value) {
         setExpanded(false);
-        node.style.height = "42px";
+        node.style.height = limitedGrow ? "30px" : "42px";
         return;
       }
       node.style.height = "auto";
       const height = node.scrollHeight;
-      if (!expanded && height > 43) setExpanded(true);
-      node.style.height = `${Math.min(height, 138)}px`;
+      if (!limitedGrow && !expanded && height > 43) setExpanded(true);
+      node.style.height = `${Math.min(height, limitedGrow ? 96 : 138)}px`;
     };
     resize();
     let width = node.clientWidth;
@@ -109,7 +116,7 @@ export function ChatComposer({
     });
     observer.observe(node);
     return () => observer.disconnect();
-  }, [value, autoGrow, voiceState, expanded]);
+  }, [value, autoGrow, voiceState, expanded, limitedGrow]);
 
   useEffect(() => {
     if (autoFocus) textareaRef.current?.focus();
@@ -150,7 +157,7 @@ export function ChatComposer({
       ) : null}
 
       <div
-        className={`composer__row${autoGrow && expanded && voiceState === "idle" ? " composer__row--expanded" : ""}`}
+        className={`composer__row${stacked || (autoGrow && expanded && voiceState === "idle") ? " composer__row--expanded" : ""}${stacked && voiceState !== "idle" ? " composer__row--voice" : ""}`}
       >
         <button
           type="button"
@@ -183,15 +190,15 @@ export function ChatComposer({
           </div>
         )}
         <div
-          className={`composer__field ${autoGrow ? "" : "composer__field--fixed"}`}
-          hidden={voiceState !== "idle"}
+          className={`composer__field ${autoGrow ? "" : "composer__field--fixed"}${fixedMultiline ? " composer__field--multiline" : ""}`}
+          hidden={voiceState !== "idle" && !stacked}
         >
           <textarea
             ref={textareaRef}
-            className={`composer__input ${autoGrow ? "" : "composer__input--fixed"}`}
-            hidden={voiceState !== "idle"}
+            className={`composer__input ${autoGrow ? "" : "composer__input--fixed"}${fixedMultiline ? " composer__input--multiline" : ""}${limitedGrow ? " composer__input--limited" : ""}`}
+            hidden={voiceState !== "idle" && !stacked}
             value={value}
-            rows={1}
+            rows={autoGrow ? 1 : fixedRows}
             maxLength={4000}
             placeholder={placeholder}
             aria-label="输入题目或备课需求"

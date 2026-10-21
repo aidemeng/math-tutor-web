@@ -195,12 +195,18 @@ export function QuestionAnnotations({
     for (const {element, quote, notes} of grouped.values()) {
       const anchor = wrapAnnotationQuote(element, quote);
       if (!anchor) continue;
+      // The wrapper replaces overlapping anchors. Transfer every explanation to
+      // the merged marker instead of leaving notes on detached DOM elements.
+      const replaced = next.filter(marker => !region.contains(marker.element));
+      const mergedNotes = [...replaced.flatMap(marker => marker.notes), ...notes];
+      for (let i = next.length - 1; i >= 0; i--)
+        if (!region.contains(next[i].element)) next.splice(i, 1);
       anchor.setAttribute("role", "button");
       anchor.tabIndex = 0;
-      anchor.setAttribute("aria-label", `查看批注：${notes[0].title}`);
+      anchor.setAttribute("aria-label", `查看批注：${mergedNotes[0].title}`);
       anchor.setAttribute("aria-haspopup", "dialog");
       anchor.setAttribute("aria-expanded", "false");
-      next.push({ element: anchor, notes });
+      next.push({ element: anchor, notes: mergedNotes });
     }
     next.sort((a, b) => a.element.compareDocumentPosition(b.element) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1);
     setMarkers(next);
