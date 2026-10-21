@@ -16,21 +16,10 @@
 }
 .annotation-reader__generate:hover { background: var(--brand-soft); }
 .question-selection-action {
-  position: fixed;
-  z-index: 195;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 36px;
-  padding: 6px 10px;
-  border: 1px solid var(--line-soft);
-  border-radius: 10px;
-  background: var(--paper);
-  color: var(--brand);
-  box-shadow: 0 3px 12px rgba(20, 45, 35, .10);
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
+  width: 100%;
+}
+.sheet__footer:has(> .question-selection-action) > .qcard__video:not(.question-selection-action) {
+  display: none;
 }
 .annotation-reader .md::selection,
 .annotation-reader .md *::selection {
@@ -53,8 +42,8 @@
 }
 .annotation-anchor {
   padding-bottom: 5px;
-  background-color: var(--brand-soft-2);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='4' viewBox='0 0 8 4'%3E%3Cpath d='M0 2Q2 0 4 2T8 2' fill='none' stroke='%2315704e' stroke-width='1.4'/%3E%3C/svg%3E");
+  background-color: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='4' viewBox='0 0 8 4'%3E%3Cpath d='M0 2Q2 0 4 2T8 2' fill='none' stroke='%23d34438' stroke-width='1.6'/%3E%3C/svg%3E");
   background-size: 8px 4px;
   background-position: left bottom;
   background-repeat: repeat-x;
@@ -64,12 +53,11 @@
   box-decoration-break: clone;
   cursor: pointer;
 }
-.annotation-anchor:hover,
-.annotation-anchor--active {
-  background-color: var(--brand-soft);
-}
-.annotation-reader--has-active .annotation-anchor:not(.annotation-anchor--active) {
-  background-color: transparent;
+/* Display math needs a block box so the underline paints below the whole formula. */
+.annotation-anchor:has(> .katex-display) {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
 }
 .annotation-popover {
   position: fixed;

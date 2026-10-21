@@ -305,7 +305,7 @@ export function ChatPage() {
           value={draft}
           photo={photo}
           busy={busy}
-          placeholder={quote ? "想问这一步的什么？" : "继续说说这道题，或补充要求"}
+          placeholder={quote ? "问问这一步" : "继续提问或补充"}
           onChange={setDraft}
           onPhotoChange={setPhoto}
           onSend={() => void send()}

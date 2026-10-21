@@ -81,7 +81,7 @@ export function QuestionAnnotations({
   const [markers, setMarkers] = useState<Marker[]>([]);
   const [active, setActive] = useState<Marker | null>(null);
   const [position, setPosition] = useState({ left: 0, top: 0 });
-  const [selectionAction, setSelectionAction] = useState<{text: string; left: number; top: number; rects: SelectionRect[]} | null>(null);
+  const [selectionAction, setSelectionAction] = useState<{text: string; rects: SelectionRect[]} | null>(null);
   const root = useRef<HTMLDivElement>(null),
     popover = useRef<HTMLDivElement>(null),
     trigger = useRef<HTMLElement | null>(null),
@@ -98,8 +98,7 @@ export function QuestionAnnotations({
       const rect = selection.getRangeAt(0).getBoundingClientRect();
       if (!rect.width && !rect.height) {setSelectionAction(null); return;}
       setActive(null);
-      setSelectionAction({text, rects: selectionPaint(source, selection), left: Math.max(12, Math.min(rect.left, window.innerWidth - 132)),
-        top: rect.top >= 60 ? rect.top - 48 : Math.min(rect.bottom + 8, window.innerHeight - 52)});
+      setSelectionAction({text, rects: selectionPaint(source, selection)});
     };
     let timer: ReturnType<typeof setTimeout>;
     const changed = () => {clearTimeout(timer); timer = setTimeout(update, 160);};
@@ -320,6 +319,7 @@ export function QuestionAnnotations({
   }
   const notes = guide?.content?.annotations ?? [];
   const ready = notes.length > 0;
+  const quoteTarget = root.current?.closest('.sheet')?.querySelector('.sheet__footer');
   return (
     <div className={`annotation-reader${selectionAction?.rects.length ? " annotation-reader--selecting" : ""}${active ? " annotation-reader--has-active" : ""}`}>
       {actionsTarget && createPortal(
@@ -342,17 +342,16 @@ export function QuestionAnnotations({
         <div className="question-selection-paint" aria-hidden="true">
           {selectionAction.rects.map((rect, index) => <span key={index} style={rect} />)}
         </div>, document.body)}
-      {selectionAction && createPortal(
-        <button type="button" className="question-selection-action"
-          style={{left: selectionAction.left, top: selectionAction.top}}
+      {selectionAction && quoteTarget && createPortal(
+        <button type="button" className="btn btn--primary qcard__video question-selection-action"
           onPointerDown={(event) => event.preventDefault()}
           onClick={() => {
             onQuote(selectionAction.text);
             window.getSelection()?.removeAllRanges();
             setSelectionAction(null);
           }}>
-          <Icon name="chat" size={15} />引用提问
-        </button>, document.body)}
+          <Icon name="chat" size={20} />引用提问
+        </button>, quoteTarget)}
       {active
         ? createPortal(
             <div

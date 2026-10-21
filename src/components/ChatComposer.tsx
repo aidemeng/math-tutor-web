@@ -46,6 +46,7 @@ export function ChatComposer({
 
   const { client } = useApp();
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
+  const [expanded, setExpanded] = useState(false);
   const [voiceSeconds, setVoiceSeconds] = useState(0);
   const callbacks = useRef({ value, onChange, onError, client });
   callbacks.current = { value, onChange, onError, client };
@@ -83,13 +84,32 @@ export function ChatComposer({
   const inputBusy = busy || voiceState !== "idle";
   const canSend = !inputBusy && (value.trim().length > 0 || !!photo);
 
-  // 自适应高度，最多约 6 行
+  // Empty placeholders never grow the field. Keep long drafts expanded while
+  // editing so switching to the wider text row cannot cause layout oscillation.
   useEffect(() => {
     const node = textareaRef.current;
     if (!node || !autoGrow) return;
-    node.style.height = "auto";
-    node.style.height = `${Math.min(node.scrollHeight, 138)}px`;
-  }, [value, autoGrow, voiceState]);
+    const resize = () => {
+      if (!value) {
+        setExpanded(false);
+        node.style.height = "42px";
+        return;
+      }
+      node.style.height = "auto";
+      const height = node.scrollHeight;
+      if (!expanded && height > 43) setExpanded(true);
+      node.style.height = `${Math.min(height, 138)}px`;
+    };
+    resize();
+    let width = node.clientWidth;
+    const observer = new ResizeObserver(() => {
+      if (node.clientWidth === width) return;
+      width = node.clientWidth;
+      resize();
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [value, autoGrow, voiceState, expanded]);
 
   useEffect(() => {
     if (autoFocus) textareaRef.current?.focus();
@@ -129,7 +149,9 @@ export function ChatComposer({
         </div>
       ) : null}
 
-      <div className="composer__row">
+      <div
+        className={`composer__row${autoGrow && expanded && voiceState === "idle" ? " composer__row--expanded" : ""}`}
+      >
         <button
           type="button"
           className="composer__icon composer__icon--photo"
@@ -172,6 +194,7 @@ export function ChatComposer({
             rows={1}
             maxLength={4000}
             placeholder={placeholder}
+            aria-label="输入题目或备课需求"
             disabled={inputBusy}
             onChange={(event) => onChange(event.target.value)}
             onKeyDown={(event) => {

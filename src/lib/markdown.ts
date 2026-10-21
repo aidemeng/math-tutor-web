@@ -135,12 +135,3 @@ export function renderMarkdown(source: string, streaming = false): string {
   const html = marked.parse(text, { async: false }) as string;
   return DOMPurify.sanitize(html, PURIFY_CONFIG);
 }
-
-/** 从渲染结果中取出所有待鉴权加载的题库配图路径。 */
-export function collectAssets(html: string): string[] {
-  const found = new Set<string>();
-  const pattern = /data-asset="([^"]+)"/g;
-  let match: RegExpExecArray | null;
-  while ((match = pattern.exec(html))) found.add(match[1]);
-  return [...found];
-}
