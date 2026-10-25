@@ -135,3 +135,24 @@ export interface TeachingGuide {
   content: GuideContent | null;
   updatedAt: number;
 }
+
+export interface MistakeRegion {x:number; y:number; width:number; height:number;}
+export interface MistakeCandidate {
+  label:string; stem:string; studentAnswer:string; gradingEvidence:string;
+  complete:boolean; missingInformation:string; region:MistakeRegion;
+}
+export interface MistakeInput {
+  candidateIndex:number; stem:string; studentAnswer:string; teacherNote:string; region:MistakeRegion;
+}
+export interface MistakeResult {
+  topic:string; verdict:'incorrect'|'correct'|'uncertain'; summary:string;
+  correctAnswer:string; explanation:string; facts:string[]; hypotheses:string[]; missingEvidence:string;
+  annotations:{title:string; explanation:string; region:MistakeRegion|null}[];
+  verification:{question:string;answer:string;whenCorrect:string;whenIncorrect:string}|null;
+}
+export interface MistakeAnalysis {
+  id:string; conversationId:string; photoId:string; request:string;
+  status:'recognizing'|'confirmation'|'analyzing'|'ready'|'failed';
+  candidates:MistakeCandidate[]; input:MistakeInput|null; result:MistakeResult|null;
+  outcome:'unverified'|'passed'|'failed'; createdAt:number; updatedAt:number;
+}

@@ -3,7 +3,7 @@ import { UserMessage } from "../components/UserMessage";
 import {TurnError} from "../components/TurnError";
 import { VideoDraftCard } from "../components/VideoDraftCard";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { friendlyError } from "../api/errors";
 import { AgentMessage } from "../components/AgentMessage";
 import { ChatComposer } from "../components/ChatComposer";
@@ -21,6 +21,8 @@ import { quotedQuestionMessage, type QuestionQuote } from "../lib/questionQuote"
 import { COMPOSER_INTENTS, type ComposerIntentId } from "../lib/composerIntents";
 import { useApp, useStoreRevision } from "../store/AppContext";
 import "../styles/chat.css";
+import { startMistakeAnalysis } from '../lib/startMistakeAnalysis';
+import { MistakeAnalyses } from '../components/mistakes/MistakeAnalyses';
 
 const EMPTY_HINT = "发来一道题，我们一起备课";
 
@@ -29,6 +31,11 @@ export function ChatPage() {
   const revision = useStoreRevision();
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [startingMistake, setStartingMistake] = useState(false);
+  const [hasMistakes, setHasMistakes] = useState(false);
+  const [mistakeRevision, setMistakeRevision] = useState(0);
+  const [composerIntent, setComposerIntent] = useState<ComposerIntentId | null>(null);
 
   const [draft, setDraft] = useState("");
   const [photo, setPhoto] = useState<PhotoPayload | null>(null);
@@ -114,7 +121,7 @@ export function ChatPage() {
   const waitingForConversation = !!id && activeId !== id;
   const turns = waitingForConversation ? [] : (store?.state.turns ?? []);
   const storeBusy = store?.state.busy ?? false;
-  const busy = storeBusy || waitingForConversation;
+  const busy = storeBusy || waitingForConversation || startingMistake;
   const pendingVideos =
     store?.state.jobs.filter(
       (job) => job.status === "queued" || job.status === "running",
@@ -125,6 +132,8 @@ export function ChatPage() {
     openedRef.current = null;
     setConversationError("");
     setQuote(null);
+    setHasMistakes(false);
+    setComposerIntent(null);
   }, [id, store]);
 
   // Bind completed new conversations to their saved URL so refreshing can restore them.
@@ -203,11 +212,12 @@ export function ChatPage() {
       return;
     }
     setDraft(next);
+    setComposerIntent(intent);
     requestAnimationFrame(() => composerInputRef.current?.focus());
   }
 
   async function send() {
-    if (!store) return;
+    if (!store || busy) return;
     const text = draft.trim();
     if (!text && !photo) return;
     const message = quote ? quotedQuestionMessage(quote, text) : text;
@@ -215,7 +225,23 @@ export function ChatPage() {
       report("引用和问题合计过长，请缩短问题或重新选取较短片段");
       return;
     }
+    if (!quote && (composerIntent === 'diagnosis' || draft.startsWith(COMPOSER_INTENTS.diagnosis.prompt))) {
+      if (!photo) { report('请上传包含题目和学生作答的图片'); return; }
+      setStartingMistake(true);
+      composerInputRef.current?.blur();
+      try {
+        const created = await startMistakeAnalysis(client, photo, message, activeId ?? undefined);
+        setDraft(''); setPhoto(null); setQuote(null); setComposerIntent(null);
+        followRef.current = true;
+        setMistakeRevision(value => value + 1);
+        void store.refreshConversations().catch(() => {});
+        navigate(`/chat/${created.conversationId}?analysis=${created.analysis.id}`);
+      } catch (error) { report(friendlyError(error)); }
+      finally { setStartingMistake(false); }
+      return;
+    }
     composerInputRef.current?.blur();
+    setComposerIntent(null);
     setDraft("");
     followRef.current = true;
     const payload = photo;
@@ -315,7 +341,7 @@ export function ChatPage() {
           </button>
         ) : null}
 
-        {!turns.length && !busy ? (
+        {!turns.length && !busy && !hasMistakes && !searchParams.get('analysis') ? (
           <div className="empty">
             <span className="empty__icon">
               <Icon name="book" size={30} />
@@ -359,13 +385,16 @@ export function ChatPage() {
           );
         })}
 
+        {activeId && !waitingForConversation && <MistakeAnalyses
+          key={activeId} client={client} conversationId={activeId} refresh={mistakeRevision}
+          initialOpenId={searchParams.get('analysis')} onRecordsChange={setHasMistakes}/>}
       </main>
 
       <div className="composer-dock" ref={dockRef}>
         {!quote && <div className="chat__composer-intents" role="group" aria-label="提问用途">
           {composerIntents.map(intent => (
             <button key={intent} type="button" disabled={busy}
-              aria-pressed={draft.startsWith(COMPOSER_INTENTS[intent].prompt)}
+              aria-pressed={composerIntent === intent || (!composerIntent && draft.startsWith(COMPOSER_INTENTS[intent].prompt))}
               onClick={() => selectComposerIntent(intent)}>
               {COMPOSER_INTENTS[intent].label}
             </button>
@@ -384,7 +413,7 @@ export function ChatPage() {
           photo={photo}
           busy={busy}
           placeholder={quote ? "问问这一步" : "继续提问或补充"}
-          onChange={setDraft}
+          onChange={value => {setDraft(value); if (!value.trim()) setComposerIntent(null);}}
           onPhotoChange={setPhoto}
           onSend={() => void send()}
           onError={report}
