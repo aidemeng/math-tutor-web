@@ -23,6 +23,7 @@ export interface StoreState {
 }
 
 export interface SendSettings {
+  mistakeAnalysisId?: string;
   photoId?: string;
   photoPreview?: string;
   photo?: { mimeType: string; data: string; preview?: string };
@@ -216,12 +217,14 @@ export function createTeacherStore(options: {
         if (message.role === "user") {
           let prompt = message.content;
           let photoId: string | undefined;
+          let mistakeAnalysisId: string | undefined;
           let selectedQuestion: Turn["selectedQuestion"];
           try {
             const saved = JSON.parse(message.content) as {
               type?: string;
               text?: string;
               photoId?: string;
+              mistakeAnalysisId?: string;
               selectedQuestion?: {id?: unknown; bankVersion?: unknown};
             };
             if (
@@ -229,6 +232,7 @@ export function createTeacherStore(options: {
               typeof saved.text === "string"
             ) {
               prompt = saved.text || "请识别这道题并检索匹配真题。";
+              mistakeAnalysisId = typeof saved.mistakeAnalysisId === "string" ? saved.mistakeAnalysisId : undefined;
               photoId = typeof saved.photoId === "string" ? saved.photoId : undefined;
               if (typeof saved.selectedQuestion?.id === "string" && typeof saved.selectedQuestion.bankVersion === "string") {
                 selectedQuestion = {id:saved.selectedQuestion.id,bankVersion:saved.selectedQuestion.bankVersion};
@@ -238,9 +242,11 @@ export function createTeacherStore(options: {
             /* 纯文本输入 */
           }
           turns.push({
+            startedAt: Number(message.created_at) || 0,
             prompt: displayPrompt(prompt),
             requestText: prompt,
             selectedQuestion,
+            mistakeAnalysisId,
             photoId,
             reply: "",
             questions: [],
@@ -278,6 +284,7 @@ export function createTeacherStore(options: {
       photoId: turn.photoId,
       photoPreview: turn.photo,
       selectedQuestion: turn.selectedQuestion,
+      mistakeAnalysisId: turn.mistakeAnalysisId,
     });
   }
 
@@ -320,6 +327,7 @@ export function createTeacherStore(options: {
         lastActivityAt: Date.now(),
         prompt: displayPrompt(content),
         requestText: content,
+        mistakeAnalysisId: settings.mistakeAnalysisId,
         selectedQuestion: settings.selectedQuestion,
         photoId,
         photo: settings.photo?.preview ?? settings.photoPreview,
@@ -335,6 +343,7 @@ export function createTeacherStore(options: {
         state.activeId,
         {
           text: content,
+          ...(settings.mistakeAnalysisId ? { mistakeAnalysisId: settings.mistakeAnalysisId } : {}),
           ...(photoId ? { photoId } : {}),
           ...(settings.selectedQuestion
             ? { selectedQuestion: settings.selectedQuestion }
@@ -533,7 +542,7 @@ export function createTeacherStore(options: {
     const conversationId = state.activeId;
     await Promise.all(
       state.turns.map(async (turn) => {
-        if (!turn.photoId || turn.photo) return;
+        if (!turn.photoId || turn.photo || turn.mistakeAnalysisId) return;
         try {
           turn.photo = await photoUrl(conversationId, turn.photoId);
         } catch {

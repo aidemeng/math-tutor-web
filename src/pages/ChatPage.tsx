@@ -1,3 +1,4 @@
+import type { Turn } from "../api/types";
 import { QuestionAnnotations } from '../components/QuestionAnnotations';
 import { UserMessage } from "../components/UserMessage";
 import {TurnError} from "../components/TurnError";
@@ -327,6 +328,41 @@ export function ChatPage() {
   const videoQuestion = videoRaw ? safeView(videoRaw) : null;
   const composerIntents: ComposerIntentId[] = ['search', 'diagnosis', 'analysis', 'method'];
 
+  function renderTurn(turn: Turn, index: number) {
+
+          const keys = turn.questions.map((item) => questionView(item).key);
+          return (
+            <section className="turn" key={`${index}-${turn.prompt}`}>
+              <UserMessage photo={turn.mistakeAnalysisId ? undefined : turn.photo} prompt={turn.prompt} />
+              <AgentMessage turnIndex={index} conversationId={activeId ?? ""}>
+                {keys.length ? (
+                  <div
+                    className="question-results"
+                    onPointerDownCapture={() => {
+                      followRef.current = false;
+                    }}
+                    onFocusCapture={() => {
+                      followRef.current = false;
+                    }}
+                  >
+                    <QuestionResults
+                      questionKeys={keys}
+                      onOpen={openQuestion}
+                    />
+                  </div>
+                ) : null}
+                {turn.videoDraft ? (
+                  <VideoDraftCard draft={turn.videoDraft} />
+                ) : null}
+              </AgentMessage>
+
+              {turn.error ? (
+                <TurnError disabled={busy} onRetry={() => void retryTurn(index)}/>
+              ) : null}
+            </section>
+          );
+
+  }
   return (
     <>
       <main className="page page--composer chat" ref={mainRef}>
@@ -369,43 +405,10 @@ export function ChatPage() {
           </div>
         ) : null}
 
-        {turns.map((turn, index) => {
-          const keys = turn.questions.map((item) => questionView(item).key);
-          return (
-            <section className="turn" key={`${index}-${turn.prompt}`}>
-              <UserMessage photo={turn.photo} prompt={turn.prompt} />
-              <AgentMessage turnIndex={index} conversationId={activeId ?? ""}>
-                {keys.length ? (
-                  <div
-                    className="question-results"
-                    onPointerDownCapture={() => {
-                      followRef.current = false;
-                    }}
-                    onFocusCapture={() => {
-                      followRef.current = false;
-                    }}
-                  >
-                    <QuestionResults
-                      questionKeys={keys}
-                      onOpen={openQuestion}
-                    />
-                  </div>
-                ) : null}
-                {turn.videoDraft ? (
-                  <VideoDraftCard draft={turn.videoDraft} />
-                ) : null}
-              </AgentMessage>
-
-              {turn.error ? (
-                <TurnError disabled={busy} onRetry={() => void retryTurn(index)}/>
-              ) : null}
-            </section>
-          );
-        })}
 
         {activeId && !waitingForConversation && <MistakeAnalyses
           key={activeId} client={client} conversationId={activeId} refresh={mistakeRevision}
-          initialOpenId={searchParams.get('analysis')} onRecordsChange={setHasMistakes} onPendingChange={setPendingMistake}/>}
+          turns={turns} renderTurn={renderTurn} initialOpenId={searchParams.get('analysis')} onRecordsChange={setHasMistakes} onPendingChange={setPendingMistake} onExpand={analysis => { void store?.send("请在聊天中给出这道错题的完整解析与推导。", { mistakeAnalysisId: analysis.id }).catch(error => report(friendlyError(error))); }}/>}
       </main>
 
       <div className="composer-dock" ref={dockRef}>

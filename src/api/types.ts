@@ -104,6 +104,7 @@ export type AgentEvent =
 /** 一轮对话（本地组装，用于渲染）。 */
 export interface Turn {
   requestText?: string;
+  mistakeAnalysisId?: string;
   selectedQuestion?: { id: string; bankVersion: string };
   videoDraft?: VideoDraft;
   prompt: string;
@@ -146,14 +147,13 @@ export interface MistakeInput {
 }
 export interface MistakeResult {
   topic:string; verdict:'incorrect'|'correct'|'uncertain'; summary:string;
-  correctAnswer:string; explanation:string; facts:string[]; hypotheses:string[]; missingEvidence:string;
-  annotations:{title:string; explanation:string; region:MistakeRegion|null}[];
-  verification:{question:string;answer:string;whenCorrect:string;whenIncorrect:string}|null;
+  correctAnswer:string; facts:string[]; hypotheses:string[]; missingEvidence:string;
+  solutionSteps?:{title:string;explanation:string}[];
 }
 export interface MistakeAnalysis {
   id:string; conversationId:string; photoId:string; request:string;
   status:'recognizing'|'confirmation'|'analyzing'|'ready'|'failed';
   clarification?:string;
   candidates:MistakeCandidate[]; input:MistakeInput|null; result:MistakeResult|null;
-  outcome:'unverified'|'passed'|'failed'; createdAt:number; updatedAt:number;
+  createdAt:number; updatedAt:number;
 }
