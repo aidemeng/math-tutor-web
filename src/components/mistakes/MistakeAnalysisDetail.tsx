@@ -6,35 +6,16 @@ import { Markdown } from "../Markdown";
 export function MistakeAnalysisDetail({
   analysis,
   busy,
-  onRetry,
   onExpand,
   onOriginal,
 }: {
   analysis: MistakeAnalysis;
   busy: boolean;
-  onRetry(): void;
   onExpand?(): void;
   onOriginal?(): void;
 }) {
   const result = normalizeMistakeContent(analysis.result);
-  if (analysis.status === "failed")
-    return (
-      <div className="mistake-wait">
-        <p>本次分析未完成，图片和补充信息已保留。</p>
-        <button className="btn btn--quiet" disabled={busy} onClick={onRetry}>
-          重新尝试
-        </button>
-      </div>
-    );
-  if (!result)
-    return (
-      <p className="mistake-wait" role="status">
-        正在核算答案，整理错因依据…
-      </p>
-    );
-  const causes = result.hypotheses.length
-    ? result.hypotheses
-    : result.facts.slice(0, 2);
+  if (!result) return null;
   return (
     <div className="mistake-report-view">
       {result.verdict !== "incorrect" && (
@@ -60,9 +41,6 @@ export function MistakeAnalysisDetail({
               : "判断依据"}
         </h3>
         <Markdown value={result.summary} />
-        {causes.map((cause, i) => (
-          <Markdown key={i} value={cause} />
-        ))}
       </section>
       {!!result.solutionSteps?.length && (
         <section className="report-section">

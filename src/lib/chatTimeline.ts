@@ -1,8 +1,16 @@
 // Generated from math-tutor-service/shared/chat-timeline.ts
 export function chatTimeline<
-  T extends { index: number; startedAt?: number; mistakeAnalysisId?: string },
+  T extends {
+    index: number;
+    startedAt?: number;
+    mistakeAnalysisId?: string;
+    mistakeAnalysis?: { id: string };
+  },
   A extends { id: string; createdAt: number },
 >(turns: T[], analyses: A[]) {
+  const attached = new Set(
+    turns.flatMap((turn) => (turn.mistakeAnalysis ? [turn.mistakeAnalysis.id] : [])),
+  );
   const rows = analyses || [];
   const times = new Map(rows.map((row) => [row.id, Number(row.createdAt) || 0]));
   // Server report times and client live-turn times can disagree. Never let
@@ -20,11 +28,13 @@ export function chatTimeline<
   });
   return [
     ...orderedTurns,
-    ...rows.map((analysis) => ({
-      kind: 'mistake' as const,
-      key: 'mistake-' + analysis.id,
-      time: Number(analysis.createdAt) || 0,
-      analysis,
-    })),
+    ...rows
+      .filter((row) => !attached.has(row.id))
+      .map((analysis) => ({
+        kind: 'mistake' as const,
+        key: 'mistake-' + analysis.id,
+        time: Number(analysis.createdAt) || 0,
+        analysis,
+      })),
   ].sort((a, b) => a.time - b.time || (a.kind === b.kind ? 0 : a.kind === 'mistake' ? -1 : 1));
 }

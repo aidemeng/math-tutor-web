@@ -61,3 +61,21 @@ it("replaces revised solutions for the same photo in saved history", async () =>
   await store.openConversation('conversation');
   expect(store.state.turns[0].questions).toEqual([latest]);
 });
+
+
+it('restores a report in the same assistant turn as its live event', async () => {
+  const analysis = {id:'report-A', status:'ready', result:{topic:'加法',summary:'多算了1。'}};
+  const events = [{type:'mistake_analysis',analysis},{type:'done'}];
+  const store = createTeacherStore({client:{
+    sendMessage: (_id:string,_input:unknown,emit:(event:any)=>void) => {
+      events.forEach(emit); return {done:Promise.resolve(),cancel(){}};
+    },
+    getConversation: async () => ({messages:[{role:'user',content:'分析这道错题'},
+      {role:'assistant',content:events.map(event=>JSON.stringify(event)).join('\n')}]}),
+  } as unknown as TutorClient});
+  store.state.activeId='conversation-A';
+  await store.send('分析这道错题');
+  expect(store.state.turns[0].mistakeAnalysis).toEqual(analysis);
+  await store.openConversation('conversation-A');
+  expect(store.state.turns[0].mistakeAnalysis).toEqual(analysis);
+});

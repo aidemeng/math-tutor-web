@@ -96,6 +96,7 @@ export type AgentEvent =
   | { type: 'status'; text: string; phase?: string }
   | { type: 'text_reset'; text: string }
   | { type: 'question'; question: Question }
+  | { type: 'mistake_analysis'; analysis: MistakeAnalysis }
   | { type: 'video_draft'; draft: VideoDraft }
   | { type: 'video_job'; job: VideoJob }
   | { type: 'error'; error: string }
@@ -103,6 +104,7 @@ export type AgentEvent =
 
 /** 一轮对话（本地组装，用于渲染）。 */
 export interface Turn {
+  mistakeAnalysis?: MistakeAnalysis;
   requestText?: string;
   mistakeAnalysisId?: string;
   selectedQuestion?: { id: string; bankVersion: string };
@@ -138,22 +140,17 @@ export interface TeachingGuide {
 }
 
 export interface MistakeRegion {x:number; y:number; width:number; height:number;}
-export interface MistakeCandidate {
-  label:string; stem:string; studentAnswer:string; gradingEvidence:string;
-  complete:boolean; missingInformation:string; region:MistakeRegion;
-}
 export interface MistakeInput {
-  candidateIndex:number; stem:string; studentAnswer:string; teacherNote:string; region:MistakeRegion;
+  stem:string; studentAnswer:string; region:MistakeRegion;
 }
 export interface MistakeResult {
   topic:string; verdict:'incorrect'|'correct'|'uncertain'; summary:string;
-  correctAnswer:string; facts:string[]; hypotheses:string[]; missingEvidence:string;
+  correctAnswer:string;
   solutionSteps?:{title:string;explanation:string}[];
 }
 export interface MistakeAnalysis {
   id:string; conversationId:string; photoId:string; request:string;
-  status:'recognizing'|'confirmation'|'analyzing'|'ready'|'failed';
-  clarification?:string;
-  candidates:MistakeCandidate[]; input:MistakeInput|null; result:MistakeResult|null;
+  status:'ready';
+  input:MistakeInput|null; result:MistakeResult|null;
   createdAt:number; updatedAt:number;
 }

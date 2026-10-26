@@ -133,6 +133,7 @@ export function createTeacherStore(options: {
 
   function applyEvent(turn: Turn, event: AgentEvent): void {
     turn.lastActivityAt = Date.now();
+    if (event.type === "mistake_analysis") turn.mistakeAnalysis = event.analysis;
     if (event.type === "video_draft") turn.videoDraft = event.draft;
     if (event.type === "video_job") {
       const i = state.jobs.findIndex((j) => j.id === event.job.id);

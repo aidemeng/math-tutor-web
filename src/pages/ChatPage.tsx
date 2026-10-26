@@ -22,7 +22,6 @@ import { quotedQuestionMessage, type QuestionQuote } from "../lib/questionQuote"
 import { COMPOSER_INTENTS, type ComposerIntentId } from "../lib/composerIntents";
 import { useApp, useStoreRevision } from "../store/AppContext";
 import "../styles/chat.css";
-import { startMistakeAnalysis } from '../lib/startMistakeAnalysis';
 import { MistakeAnalyses } from '../components/mistakes/MistakeAnalyses';
 
 const EMPTY_HINT = "发来一道题，我们一起备课";
@@ -33,10 +32,7 @@ export function ChatPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [startingMistake, setStartingMistake] = useState(false);
   const [hasMistakes, setHasMistakes] = useState(false);
-  const [pendingMistake, setPendingMistake] = useState<string | null>(null);
-  const [mistakeRevision, setMistakeRevision] = useState(0);
   const [composerIntent, setComposerIntent] = useState<ComposerIntentId | null>(null);
 
   const [draft, setDraft] = useState("");
@@ -123,7 +119,7 @@ export function ChatPage() {
   const waitingForConversation = !!id && activeId !== id;
   const turns = waitingForConversation ? [] : (store?.state.turns ?? []);
   const storeBusy = store?.state.busy ?? false;
-  const busy = storeBusy || waitingForConversation || startingMistake;
+  const busy = storeBusy || waitingForConversation;
   const pendingVideos =
     store?.state.jobs.filter(
       (job) => job.status === "queued" || job.status === "running",
@@ -135,7 +131,6 @@ export function ChatPage() {
     setConversationError("");
     setQuote(null);
     setHasMistakes(false);
-    setPendingMistake(null);
     setComposerIntent(null);
   }, [id, store]);
 
@@ -228,37 +223,6 @@ export function ChatPage() {
       report("引用和问题合计过长，请缩短问题或重新选取较短片段");
       return;
     }
-    if (pendingMistake && !quote && (text || photo)) {
-      setStartingMistake(true);
-      try {
-        const uploaded = photo && activeId ? await client.uploadPhoto(activeId, {
-          mimeType: photo.mimeType, data: photo.data,
-        }) : null;
-        await client.clarifyMistakeAnalysis(pendingMistake, text, uploaded?.id);
-        setPhoto(null);
-        setDraft("");
-        setPendingMistake(null);
-        setMistakeRevision(value => value + 1);
-        composerInputRef.current?.blur();
-      } catch (error) { report(friendlyError(error)); }
-      finally { setStartingMistake(false); }
-      return;
-    }
-    if (!quote && (composerIntent === 'diagnosis' || draft.startsWith(COMPOSER_INTENTS.diagnosis.prompt))) {
-      if (!photo) { report('请上传包含题目和学生作答的图片'); return; }
-      setStartingMistake(true);
-      composerInputRef.current?.blur();
-      try {
-        const created = await startMistakeAnalysis(client, photo, message, activeId ?? undefined);
-        setDraft(''); setPhoto(null); setQuote(null); setComposerIntent(null);
-        followRef.current = true;
-        setMistakeRevision(value => value + 1);
-        void store.refreshConversations().catch(() => {});
-        navigate(`/chat/${created.conversationId}`);
-      } catch (error) { report(friendlyError(error)); }
-      finally { setStartingMistake(false); }
-      return;
-    }
     composerInputRef.current?.blur();
     setComposerIntent(null);
     setDraft("");
@@ -328,7 +292,7 @@ export function ChatPage() {
   const videoQuestion = videoRaw ? safeView(videoRaw) : null;
   const composerIntents: ComposerIntentId[] = ['search', 'diagnosis', 'analysis', 'method'];
 
-  function renderTurn(turn: Turn, index: number) {
+  function renderTurn(turn: Turn, index: number, reportCard?: import('react').ReactNode) {
 
           const keys = turn.questions.map((item) => questionView(item).key);
           return (
@@ -354,6 +318,7 @@ export function ChatPage() {
                 {turn.videoDraft ? (
                   <VideoDraftCard draft={turn.videoDraft} />
                 ) : null}
+                {reportCard}
               </AgentMessage>
 
               {turn.error ? (
@@ -407,8 +372,8 @@ export function ChatPage() {
 
 
         {activeId && !waitingForConversation && <MistakeAnalyses
-          key={activeId} client={client} conversationId={activeId} refresh={mistakeRevision}
-          turns={turns} renderTurn={renderTurn} initialOpenId={searchParams.get('analysis')} onRecordsChange={setHasMistakes} onPendingChange={setPendingMistake} onExpand={analysis => { void store?.send("请在聊天中给出这道错题的完整解析与推导。", { mistakeAnalysisId: analysis.id }).catch(error => report(friendlyError(error))); }}/>}
+          key={activeId} client={client} conversationId={activeId} busy={busy}
+          turns={turns} renderTurn={renderTurn} initialOpenId={searchParams.get('analysis')} onRecordsChange={setHasMistakes} onExpand={analysis => { void store?.send("请在聊天中给出这道错题的完整解析与推导。", { mistakeAnalysisId: analysis.id }).catch(error => report(friendlyError(error))); }}/>}
       </main>
 
       <div className="composer-dock" ref={dockRef}>
@@ -530,7 +495,7 @@ export function ChatPage() {
                   <span className="pill pill--plain">{detail.source}</span>
                 </div>
                 <h3 className="sheet__heading">{detail.title}</h3>
-                <QuestionDiagrams diagrams={detail.raw.diagrams} />
+                <QuestionDiagrams diagrams={detail.raw.diagrams} section="analysis" />
                 <Markdown
                   value={detail.explanation || detail.answer || "暂无解析"}
                   questionKey={detailKey ?? undefined}

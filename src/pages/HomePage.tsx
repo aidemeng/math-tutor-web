@@ -9,7 +9,6 @@ import type { PhotoPayload } from '../lib/photo';
 import { formatRelative } from '../lib/time';
 import { useApp, useStoreRevision } from '../store/AppContext';
 import '../styles/home.css';
-import { startMistakeAnalysis } from '../lib/startMistakeAnalysis';
 
 const ENTRIES: {intent: IntentId; title: string}[] = [
   {intent: 'search', title: '智能找题'},
@@ -19,7 +18,7 @@ const ENTRIES: {intent: IntentId; title: string}[] = [
 ];
 
 export function HomePage() {
-  const { store, client } = useApp();
+  const { store } = useApp();
   useStoreRevision();
   const navigate = useNavigate();
   const [draft, setDraft] = useState('');
@@ -28,10 +27,9 @@ export function HomePage() {
   const composerInputRef = useRef<HTMLTextAreaElement>(null);
   const [selectedIntent, setSelectedIntent] = useState<IntentId | null>(null);
   const preset = useRef('');
-  const [startingMistake, setStartingMistake] = useState(false);
 
   if (!store) return null;
-  const busy = store.state.busy || startingMistake;
+  const busy = store.state.busy;
   const recent = store.state.conversations.slice(0, 3);
 
   function selectIntent(intent: IntentId) {
@@ -55,19 +53,6 @@ export function HomePage() {
     if (!store || busy) return;
     const content = text.trim();
     if (!content && !withPhoto) return;
-    if (selectedIntent === 'diagnosis') {
-      if (!withPhoto) { toast('请上传包含题目和学生作答的图片'); return; }
-      setStartingMistake(true);
-      composerInputRef.current?.blur();
-      try {
-        const created = await startMistakeAnalysis(client, withPhoto, content);
-        setDraft(''); setPhoto(null); setSelectedIntent(null); preset.current = '';
-        void store.refreshConversations().catch(() => {});
-        navigate(`/chat/${created.conversationId}`);
-      } catch (error) { toast(friendlyError(error)); }
-      finally { setStartingMistake(false); }
-      return;
-    }
     setDraft('');
     setPhoto(null);
     setSelectedIntent(null);

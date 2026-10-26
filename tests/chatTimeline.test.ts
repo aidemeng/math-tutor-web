@@ -32,3 +32,10 @@ it("keeps subsequent free-text replies after a report even when the client clock
     "turn-2",
   ]);
 });
+
+
+it('keeps an attached report inside its original reply without a duplicate timeline entry', () => {
+  const report={id:'report-A',createdAt:100};
+  const rows=chatTimeline([{index:0,startedAt:90,mistakeAnalysis:report}], [report]);
+  expect(rows.map(row=>row.key)).toEqual(['turn-0']);
+});

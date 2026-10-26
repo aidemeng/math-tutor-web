@@ -13,11 +13,7 @@ export class ApiError extends Error {
 }
 
 const MESSAGES: Record<string, string> = {
-  MISTAKE_RATE_LIMITED: '错题分析较频繁，请稍等片刻再试',
-  MISTAKE_BUSY: '这道错题正在分析，请稍候',
-  MISTAKE_NOT_FOUND: '未找到这条错题分析记录',
-  MISTAKE_STATE_INVALID: '分析状态已更新，请重新打开记录',
-  MISTAKE_CANDIDATE_INVALID: '请重新选择需要分析的题目',
+  MISTAKE_ANALYSIS_NOT_FOUND: '未找到这条错题分析记录',
 
   GUIDE_RATE_LIMITED: '批注准备较频繁，请稍等片刻再试',
   CREDIT_CODE_INVALID: '兑换码无效，请检查或联系发放人',

@@ -30,9 +30,6 @@ export interface MessageOptions {
 
 export interface TutorClient {
   listMistakeAnalyses(conversationId:string): Promise<{analyses:MistakeAnalysis[]}>;
-  createMistakeAnalysis(input:{conversationId:string;photoId:string;request:string}): Promise<{analysis:MistakeAnalysis}>;
-  clarifyMistakeAnalysis(id:string,reply:string,photoId?:string): Promise<{analysis:MistakeAnalysis}>;
-  retryMistakeAnalysis(id:string): Promise<{analysis:MistakeAnalysis}>;
   getTeachingGuide(questionId: string, bankVersion: string, studentContext?: string): Promise<{guide: TeachingGuide | null}>;
   generateTeachingGuide(input: {questionId: string; bankVersion: string; studentContext: string; regenerate?: boolean}): Promise<{guide: TeachingGuide}>;
   transcribeSpeech(audio: ArrayBuffer, signal?: AbortSignal): Promise<{ text: string }>;
@@ -228,9 +225,6 @@ export function createClient(options: { getToken: () => string | null }): TutorC
 
   return {
     listMistakeAnalyses: (conversationId) => request(`/v1/mistake-analyses${query({conversationId})}`),
-    createMistakeAnalysis: (input) => request('/v1/mistake-analyses',{method:'POST',body:JSON.stringify(input)}),
-    clarifyMistakeAnalysis: (id,reply,photoId) => request(`/v1/mistake-analyses/${encodeURIComponent(id)}/clarify`,{method:'POST',body:JSON.stringify({reply,photoId})}),
-    retryMistakeAnalysis: (id) => request(`/v1/mistake-analyses/${encodeURIComponent(id)}/retry`,{method:'POST'}),
     getTeachingGuide: (questionId, bankVersion, studentContext) => request(`/v1/teaching-guides${query({questionId,bankVersion})}${studentContext === undefined ? "" : "&studentContext=" + encodeURIComponent(studentContext)}`),
     generateTeachingGuide: (input) => request('/v1/teaching-guides', {method:'POST',body:JSON.stringify(input)}),
     transcribeSpeech: (audio, signal) => request('/v1/speech/transcribe', {
