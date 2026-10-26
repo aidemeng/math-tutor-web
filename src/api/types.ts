@@ -92,15 +92,15 @@ export interface Me {
 
 /** SSE 事件协议。 */
 export type AgentEvent =
-  | { type: 'text'; text: string }
-  | { type: 'status'; text: string; phase?: string }
-  | { type: 'text_reset'; text: string }
-  | { type: 'question'; question: Question }
-  | { type: 'mistake_analysis'; analysis: MistakeAnalysis }
-  | { type: 'video_draft'; draft: VideoDraft }
-  | { type: 'video_job'; job: VideoJob }
-  | { type: 'error'; error: string }
-  | { type: 'done' };
+  | { type: "text"; text: string }
+  | { type: "status"; text: string; phase?: string }
+  | { type: "text_reset"; text: string }
+  | { type: "question"; question: Question }
+  | { type: "mistake_analysis"; analysis: MistakeAnalysis }
+  | { type: "video_draft"; draft: VideoDraft }
+  | { type: "video_job"; job: VideoJob }
+  | { type: "error"; error: string }
+  | { type: "done" };
 
 /** 一轮对话（本地组装，用于渲染）。 */
 export interface Turn {
@@ -120,37 +120,74 @@ export interface Turn {
   error: string | null;
 }
 
-export interface VideoDraft {id:string;mode:'question'|'method';title:string;requirements:string;script:string;examples:{purpose:string;question:Question}[];createdAt:number;}
+export interface VideoDraft {
+  id: string;
+  mode: "question" | "method";
+  title: string;
+  requirements: string;
+  script: string;
+  examples: { purpose: string; question: Question }[];
+  createdAt: number;
+}
 
 export interface QuestionAnnotation {
-  section: 'question' | 'analysis';
+  section: "question" | "analysis";
   quote: string;
   title: string;
   explanation: string;
 }
-export interface GuideContent {annotations: QuestionAnnotation[];}
+export interface GuideContent {
+  annotations: QuestionAnnotation[];
+}
 export interface TeachingGuide {
   id: string;
   questionId: string;
   bankVersion: string;
   studentContext: string;
-  status: 'generating' | 'ready' | 'failed';
+  status: "generating" | "ready" | "failed";
   content: GuideContent | null;
   updatedAt: number;
 }
 
-export interface MistakeRegion {x:number; y:number; width:number; height:number;}
+export interface MistakeRegion {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 export interface MistakeInput {
-  stem:string; studentAnswer:string; region:MistakeRegion;
+  stem: string;
+  studentAnswer: string;
+  region: MistakeRegion;
 }
 export interface MistakeResult {
-  topic:string; verdict:'incorrect'|'correct'|'uncertain'; summary:string;
-  correctAnswer:string;
-  solutionSteps?:{title:string;explanation:string}[];
+  topic: string;
+  verdict: "incorrect" | "correct" | "uncertain";
+  summary: string;
+  correctAnswer: string;
+  solutionSteps?: { title: string; explanation: string }[];
 }
 export interface MistakeAnalysis {
-  id:string; conversationId:string; photoId:string; request:string;
-  status:'ready';
-  input:MistakeInput|null; result:MistakeResult|null;
-  createdAt:number; updatedAt:number;
+  id: string;
+  conversationId: string;
+  photoId: string;
+  request: string;
+  status: "ready";
+  input: MistakeInput | null;
+  result: MistakeResult | null;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export type BookKind = "find" | "solve" | "generate" | "mistake";
+export interface BookItem {
+  id: string;
+  conversationId: string;
+  turnId: string;
+  kind: BookKind;
+  title: string;
+  stem: string;
+  createdAt: number;
+  question?: Question;
+  analysis?: MistakeAnalysis;
 }

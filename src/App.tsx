@@ -1,3 +1,4 @@
+import { QuestionBookPage } from "./pages/QuestionBookPage";
 import { SharePage } from "./pages/SharePage";
 import { GrowthPage } from "./pages/GrowthPage";
 import { BrandLogo } from "./components/BrandLogo";
@@ -69,7 +70,12 @@ function PrivateApp() {
 
   if (status === "loading") return <Splash />;
   if (status === "error")
-    return <><ErrorScreen message={error} onRetry={retry} /><ToastHost /></>;
+    return (
+      <>
+        <ErrorScreen message={error} onRetry={retry} />
+        <ToastHost />
+      </>
+    );
   if (status === "anonymous") {
     return (
       <>
@@ -88,6 +94,7 @@ function PrivateApp() {
           <Route path="/videos" element={<VideosPage />} />
           <Route path="/videos/:id" element={<TaskPage />} />
           <Route path="/admin/growth" element={<GrowthPage />} />
+          <Route path="/question-book" element={<QuestionBookPage />} />
           <Route path="/history" element={<HistoryPage />} />
           <Route path="/chat" element={<ChatPage />} />
           <Route path="/chat/:id" element={<ChatPage />} />

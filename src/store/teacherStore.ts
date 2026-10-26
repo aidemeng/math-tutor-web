@@ -57,6 +57,7 @@ export interface TeacherStore {
 
   /** 按题卡 key 取原始题目。 */
   question(key: string): Question | undefined;
+  rememberQuestion(question: Question): void;
 
   assetUrl(key: string, index: number): Promise<string>;
   photoUrl(conversationId: string, photoId: string): Promise<string>;
@@ -121,8 +122,12 @@ export function createTeacherStore(options: {
     }
     for (const job of state.jobs) {
       try {
-        const snapshot = JSON.parse(job.snapshot) as { question?: Question; examples?: {question: Question}[] };
-        if (snapshot.question) questions.set(questionView(snapshot.question).key, snapshot.question);
+        const snapshot = JSON.parse(job.snapshot) as {
+          question?: Question;
+          examples?: { question: Question }[];
+        };
+        if (snapshot.question)
+          questions.set(questionView(snapshot.question).key, snapshot.question);
         for (const example of snapshot.examples || [])
           questions.set(questionView(example.question).key, example.question);
       } catch {
@@ -133,7 +138,8 @@ export function createTeacherStore(options: {
 
   function applyEvent(turn: Turn, event: AgentEvent): void {
     turn.lastActivityAt = Date.now();
-    if (event.type === "mistake_analysis") turn.mistakeAnalysis = event.analysis;
+    if (event.type === "mistake_analysis")
+      turn.mistakeAnalysis = event.analysis;
     if (event.type === "video_draft") turn.videoDraft = event.draft;
     if (event.type === "video_job") {
       const i = state.jobs.findIndex((j) => j.id === event.job.id);
@@ -153,10 +159,12 @@ export function createTeacherStore(options: {
       questionView(event.question);
       const existing = turn.questions.findIndex(
         (item) =>
-          item.id === event.question.id &&
-          item.bankVersion === event.question.bankVersion ||
-          (item.kind === "solution" && event.question.kind === "solution" &&
-            !!item.photoId && item.photoId === event.question.photoId &&
+          (item.id === event.question.id &&
+            item.bankVersion === event.question.bankVersion) ||
+          (item.kind === "solution" &&
+            event.question.kind === "solution" &&
+            !!item.photoId &&
+            item.photoId === event.question.photoId &&
             item.stem === event.question.stem),
       );
       if (existing < 0) turn.questions.push(event.question);
@@ -226,17 +234,27 @@ export function createTeacherStore(options: {
               text?: string;
               photoId?: string;
               mistakeAnalysisId?: string;
-              selectedQuestion?: {id?: unknown; bankVersion?: unknown};
+              selectedQuestion?: { id?: unknown; bankVersion?: unknown };
             };
             if (
               saved.type === "teacher_input" &&
               typeof saved.text === "string"
             ) {
               prompt = saved.text || "请识别这道题并检索匹配真题。";
-              mistakeAnalysisId = typeof saved.mistakeAnalysisId === "string" ? saved.mistakeAnalysisId : undefined;
-              photoId = typeof saved.photoId === "string" ? saved.photoId : undefined;
-              if (typeof saved.selectedQuestion?.id === "string" && typeof saved.selectedQuestion.bankVersion === "string") {
-                selectedQuestion = {id:saved.selectedQuestion.id,bankVersion:saved.selectedQuestion.bankVersion};
+              mistakeAnalysisId =
+                typeof saved.mistakeAnalysisId === "string"
+                  ? saved.mistakeAnalysisId
+                  : undefined;
+              photoId =
+                typeof saved.photoId === "string" ? saved.photoId : undefined;
+              if (
+                typeof saved.selectedQuestion?.id === "string" &&
+                typeof saved.selectedQuestion.bankVersion === "string"
+              ) {
+                selectedQuestion = {
+                  id: saved.selectedQuestion.id,
+                  bankVersion: saved.selectedQuestion.bankVersion,
+                };
               }
             }
           } catch {
@@ -295,7 +313,8 @@ export function createTeacherStore(options: {
   ): Promise<void> {
     if (state.busy) throw stateError("MESSAGE_IN_PROGRESS");
     let content = String(text ?? "").trim();
-    if (!content && !settings.photo && !settings.photoId) throw stateError("MESSAGE_REQUIRED");
+    if (!content && !settings.photo && !settings.photoId)
+      throw stateError("MESSAGE_REQUIRED");
     if (!content) content = "请识别这道题并检索匹配真题。";
 
     state.busy = true;
@@ -305,7 +324,9 @@ export function createTeacherStore(options: {
     let turn: Turn | undefined;
     let cancelled = false;
     let stopped!: () => void;
-    const cancellation = new Promise<void>((resolve) => { stopped = resolve; });
+    const cancellation = new Promise<void>((resolve) => {
+      stopped = resolve;
+    });
     try {
       if (!state.activeId || settings.newConversation) {
         const created = await client.createConversation(content.slice(0, 50));
@@ -344,7 +365,9 @@ export function createTeacherStore(options: {
         state.activeId,
         {
           text: content,
-          ...(settings.mistakeAnalysisId ? { mistakeAnalysisId: settings.mistakeAnalysisId } : {}),
+          ...(settings.mistakeAnalysisId
+            ? { mistakeAnalysisId: settings.mistakeAnalysisId }
+            : {}),
           ...(photoId ? { photoId } : {}),
           ...(settings.selectedQuestion
             ? { selectedQuestion: settings.selectedQuestion }
@@ -362,7 +385,9 @@ export function createTeacherStore(options: {
         cancel() {
           if (cancelled) return;
           cancelled = true;
-          void Promise.resolve(transport.cancel()).catch(() => {}).finally(stopped);
+          void Promise.resolve(transport.cancel())
+            .catch(() => {})
+            .finally(stopped);
         },
       };
       emit();
@@ -414,15 +439,21 @@ export function createTeacherStore(options: {
   }
 
   async function redeemCredits(code: string): Promise<number> {
-    const result = await client.redeemCredits(code).catch(async (error: unknown) => {
-      if (!disposed && error instanceof ApiError && error.code === 'CREDIT_CODE_REDEEMED') {
-        // The first response may have been lost after the grant committed.
-        // Invalidate pending reads before reconciling the authoritative balance.
-        jobsVersion++;
-        await refreshJobs();
-      }
-      throw error;
-    });
+    const result = await client
+      .redeemCredits(code)
+      .catch(async (error: unknown) => {
+        if (
+          !disposed &&
+          error instanceof ApiError &&
+          error.code === "CREDIT_CODE_REDEEMED"
+        ) {
+          // The first response may have been lost after the grant committed.
+          // Invalidate pending reads before reconciling the authoritative balance.
+          jobsVersion++;
+          await refreshJobs();
+        }
+        throw error;
+      });
     if (!disposed) {
       jobsVersion++;
       state.credits = result.available;
@@ -568,7 +599,9 @@ export function createTeacherStore(options: {
     openConversation,
     send,
     retryTurn,
-    get canStop() { return !!activeRequest && state.busy; },
+    get canStop() {
+      return !!activeRequest && state.busy;
+    },
     stopReply() {
       if (!activeRequest || !state.busy) return false;
       activeRequest.cancel();
@@ -581,6 +614,9 @@ export function createTeacherStore(options: {
     submitDraft,
     retry,
     question,
+    rememberQuestion(raw: Question) {
+      questions.set(questionView(raw).key, raw);
+    },
     assetUrl,
     photoUrl,
     videoUrl,
