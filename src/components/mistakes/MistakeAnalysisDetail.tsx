@@ -1,10 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { TutorClient } from "../../api/client";
-import type {
-  MistakeAnalysis,
-  MistakeInput,
-  MistakeRegion,
-} from "../../api/types";
+import type { MistakeAnalysis } from "../../api/types";
 import { Markdown } from "../Markdown";
 import { PhotoViewer } from "../PhotoViewer";
 import { MistakeImage } from "./MistakeImage";
@@ -13,33 +9,17 @@ export function MistakeAnalysisDetail({
   analysis,
   client,
   busy,
-  onConfirm,
   onRetry,
 }: {
   analysis: MistakeAnalysis;
   client: TutorClient;
   busy: boolean;
-  onConfirm(input: MistakeInput): void;
   onRetry(): void;
 }) {
   const [src, setSrc] = useState("");
-  const initialized = useRef(false);
   const [photoFailed, setPhotoFailed] = useState(false);
   const [photoRevision, setPhotoRevision] = useState(0);
-  const [candidateIndex, setCandidateIndex] = useState(
-    analysis.input?.candidateIndex ?? 0,
-  );
-  const [stem, setStem] = useState(""),
-    [answer, setAnswer] = useState(""),
-    [note, setNote] = useState("");
-  const [region, setRegion] = useState<MistakeRegion>({
-    x: 0,
-    y: 0,
-    width: 1,
-    height: 1,
-  });
-  const [editing, setEditing] = useState(false),
-    [preview, setPreview] = useState(false);
+  const [preview, setPreview] = useState(false);
   const [active, setActive] = useState<number | null>(null);
   const [showAnswer, setShowAnswer] = useState(false),
     [tab, setTab] = useState<"diagnosis" | "question" | "solution">(
@@ -65,33 +45,7 @@ export function MistakeAnalysisDetail({
       if (url) URL.revokeObjectURL(url);
     };
   }, [client, analysis.conversationId, analysis.photoId, photoRevision]);
-  useEffect(() => {
-    if (!initialized.current && analysis.candidates.length) {
-      initialized.current = true;
-      if (!analysis.input) {
-        const suggested = analysis.candidates.findIndex(
-          (item) => item.complete && item.studentAnswer.trim(),
-        );
-        if (suggested >= 0 && suggested !== candidateIndex) {
-          setCandidateIndex(suggested);
-          return;
-        }
-      }
-    }
-    const candidate = analysis.candidates[candidateIndex];
-    if (!candidate) return;
-    const input = analysis.input;
-    setStem(input?.stem ?? candidate.stem);
-    setAnswer(input?.studentAnswer ?? candidate.studentAnswer);
-    setNote(input?.teacherNote ?? "");
-    setRegion(input?.region ?? candidate.region);
-    setEditing(false);
-  }, [analysis.id, analysis.candidates, analysis.input, candidateIndex]);
-  // Candidate objects come from polling; parent only replaces an unchanged record
-  // when updatedAt changes, preserving edits while a teacher is confirming it.
   const result = analysis.result;
-  const confirmable = analysis.status === "confirmation";
-  const candidate = analysis.candidates[candidateIndex];
   if (analysis.status === "recognizing")
     return (
       <p className="mistake-wait" role="status">
@@ -107,7 +61,7 @@ export function MistakeAnalysisDetail({
   if (analysis.status === "failed")
     return (
       <div className="mistake-wait">
-        <p>本次分析未完成，已保留图片和确认信息。</p>
+        <p>本次分析未完成，已保留图片和补充信息。</p>
         <button className="btn btn--quiet" disabled={busy} onClick={onRetry}>
           重试
         </button>
@@ -115,7 +69,7 @@ export function MistakeAnalysisDetail({
     );
   return (
     <div className="mistake-detail">
-      {!confirmable && result && (
+      {result && (
         <div className="mistake-tabs" role="tablist" aria-label="错题阅读内容">
           {(
             [
@@ -136,33 +90,13 @@ export function MistakeAnalysisDetail({
           ))}
         </div>
       )}
-      {confirmable && (
-        <>
-          <p className="muted">先核对题目范围与学生作答，确认后再分析错因。</p>
-          <div className="mistake-options" role="group" aria-label="选择题目">
-            {analysis.candidates.map((q, i) => (
-              <button
-                type="button"
-                key={i}
-                aria-pressed={candidateIndex === i}
-                onClick={() => setCandidateIndex(i)}
-              >
-                {q.label}
-                {!q.complete ? "（不完整）" : ""}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-      {(confirmable || tab === "diagnosis") && (
+      {tab === "diagnosis" && (
         <>
           {src && (
             <MistakeImage
               src={src}
-              region={confirmable ? region : analysis.input?.region}
-              editing={editing}
-              onRegionChange={setRegion}
-              annotations={confirmable ? [] : result?.annotations}
+              region={analysis.input?.region}
+              annotations={result?.annotations}
               active={active}
               onSelect={(i) => setActive(active === i ? null : i)}
             />
@@ -182,117 +116,10 @@ export function MistakeAnalysisDetail({
                 查看整张原图
               </button>
             )}
-            {confirmable && (
-              <button
-                type="button"
-                aria-pressed={editing}
-                onClick={() => setEditing(!editing)}
-              >
-                {editing ? "完成范围调整" : "调整题目范围"}
-              </button>
-            )}
           </div>
-          {editing && (
-            <p className="muted">
-              在原图上拖动框选题目；也可以使用下面的比例输入精确调整。
-            </p>
-          )}
-          {editing && (
-            <div className="mistake-region-fields">
-              {(["x", "y", "width", "height"] as const).map((key, i) => (
-                <label key={key}>
-                  {["左侧", "顶部", "宽度", "高度"][i]} %
-                  <input
-                    type="number"
-                    min={key === "width" || key === "height" ? 1 : 0}
-                    max={100}
-                    value={Math.round(region[key] * 100)}
-                    onChange={(e) => {
-                      const value = Math.max(
-                        key === "width" || key === "height" ? 0.01 : 0,
-                        Math.min(
-                          key === "x" || key === "y" ? 0.99 : 1,
-                          Number(e.target.value) / 100,
-                        ),
-                      );
-                      const next = { ...region, [key]: value };
-                      next.width = Math.min(next.width, 1 - next.x);
-                      next.height = Math.min(next.height, 1 - next.y);
-                      setRegion(next);
-                    }}
-                  />
-                </label>
-              ))}
-            </div>
-          )}
         </>
       )}
-      {confirmable && (
-        <>
-          {candidate && !candidate.complete && (
-            <p className="mistake-caution">
-              题目可能缺少内容：
-              {candidate.missingInformation ||
-                "请补充完整条件或重新上传清晰图片。"}
-            </p>
-          )}
-          <label className="mistake-field">
-            确认题干
-            <textarea
-              value={stem}
-              maxLength={10000}
-              rows={5}
-              onChange={(e) => setStem(e.target.value)}
-            />
-          </label>
-          <label className="mistake-field">
-            学生作答
-            <input
-              value={answer}
-              maxLength={2000}
-              placeholder="未看到作答可留空"
-              onChange={(e) => setAnswer(e.target.value)}
-            />
-          </label>
-          {candidate?.gradingEvidence && (
-            <p className="muted">
-              识别到的批改痕迹：{candidate.gradingEvidence}（请核对）
-            </p>
-          )}
-          <label className="mistake-field">
-            补充说明（选填）
-            <textarea
-              value={note}
-              maxLength={2000}
-              rows={2}
-              placeholder="例如学生的口头解释、补充条件或具体疑问"
-              onChange={(e) => setNote(e.target.value)}
-            />
-          </label>
-          <button
-            type="button"
-            className="btn btn--primary"
-            disabled={
-              busy ||
-              !stem.trim() ||
-              region.width < 0.01 ||
-              region.height < 0.01
-            }
-            onClick={() =>
-              onConfirm({
-                candidateIndex,
-                stem,
-                studentAnswer: answer,
-                teacherNote: note,
-                region,
-              })
-            }
-          >
-            确认并分析
-          </button>
-        </>
-      )}
-      {!confirmable && result && (
+      {result && (
         <>
           {tab === "question" && (
             <Markdown value={analysis.input?.stem || ""} />

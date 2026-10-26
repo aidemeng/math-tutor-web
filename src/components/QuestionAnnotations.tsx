@@ -334,6 +334,8 @@ export function QuestionAnnotations({
           onClick={() => void generate()}
           disabled={loading || working}
           className="annotation-reader__generate"
+          hidden
+          style={{ display: "none" }}
           aria-label={working ? "正在生成批注" : ready ? "重新生成批注" : "生成 AI 批注"}
           title={ready ? "重新生成批注" : "解释原文中的关键步骤"}
           aria-busy={working}

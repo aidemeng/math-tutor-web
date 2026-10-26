@@ -34,6 +34,7 @@ export function ChatPage() {
   const [searchParams] = useSearchParams();
   const [startingMistake, setStartingMistake] = useState(false);
   const [hasMistakes, setHasMistakes] = useState(false);
+  const [pendingMistake, setPendingMistake] = useState<string | null>(null);
   const [mistakeRevision, setMistakeRevision] = useState(0);
   const [composerIntent, setComposerIntent] = useState<ComposerIntentId | null>(null);
 
@@ -133,6 +134,7 @@ export function ChatPage() {
     setConversationError("");
     setQuote(null);
     setHasMistakes(false);
+    setPendingMistake(null);
     setComposerIntent(null);
   }, [id, store]);
 
@@ -225,6 +227,22 @@ export function ChatPage() {
       report("引用和问题合计过长，请缩短问题或重新选取较短片段");
       return;
     }
+    if (pendingMistake && !quote && (text || photo)) {
+      setStartingMistake(true);
+      try {
+        const uploaded = photo && activeId ? await client.uploadPhoto(activeId, {
+          mimeType: photo.mimeType, data: photo.data,
+        }) : null;
+        await client.clarifyMistakeAnalysis(pendingMistake, text, uploaded?.id);
+        setPhoto(null);
+        setDraft("");
+        setPendingMistake(null);
+        setMistakeRevision(value => value + 1);
+        composerInputRef.current?.blur();
+      } catch (error) { report(friendlyError(error)); }
+      finally { setStartingMistake(false); }
+      return;
+    }
     if (!quote && (composerIntent === 'diagnosis' || draft.startsWith(COMPOSER_INTENTS.diagnosis.prompt))) {
       if (!photo) { report('请上传包含题目和学生作答的图片'); return; }
       setStartingMistake(true);
@@ -235,7 +253,7 @@ export function ChatPage() {
         followRef.current = true;
         setMistakeRevision(value => value + 1);
         void store.refreshConversations().catch(() => {});
-        navigate(`/chat/${created.conversationId}?analysis=${created.analysis.id}`);
+        navigate(`/chat/${created.conversationId}`);
       } catch (error) { report(friendlyError(error)); }
       finally { setStartingMistake(false); }
       return;
@@ -387,7 +405,7 @@ export function ChatPage() {
 
         {activeId && !waitingForConversation && <MistakeAnalyses
           key={activeId} client={client} conversationId={activeId} refresh={mistakeRevision}
-          initialOpenId={searchParams.get('analysis')} onRecordsChange={setHasMistakes}/>}
+          initialOpenId={searchParams.get('analysis')} onRecordsChange={setHasMistakes} onPendingChange={setPendingMistake}/>}
       </main>
 
       <div className="composer-dock" ref={dockRef}>
@@ -416,6 +434,7 @@ export function ChatPage() {
           onChange={value => {setDraft(value); if (!value.trim()) setComposerIntent(null);}}
           onPhotoChange={setPhoto}
           onSend={() => void send()}
+          onStop={store?.canStop ? () => { if (store.stopReply()) toast("已停止"); } : undefined}
           onError={report}
         />
       </div>

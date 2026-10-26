@@ -153,6 +153,7 @@ export interface MistakeResult {
 export interface MistakeAnalysis {
   id:string; conversationId:string; photoId:string; request:string;
   status:'recognizing'|'confirmation'|'analyzing'|'ready'|'failed';
+  clarification?:string;
   candidates:MistakeCandidate[]; input:MistakeInput|null; result:MistakeResult|null;
   outcome:'unverified'|'passed'|'failed'; createdAt:number; updatedAt:number;
 }

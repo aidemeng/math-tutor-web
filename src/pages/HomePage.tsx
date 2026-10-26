@@ -63,7 +63,7 @@ export function HomePage() {
         const created = await startMistakeAnalysis(client, withPhoto, content);
         setDraft(''); setPhoto(null); setSelectedIntent(null); preset.current = '';
         void store.refreshConversations().catch(() => {});
-        navigate(`/chat/${created.conversationId}?analysis=${created.analysis.id}`);
+        navigate(`/chat/${created.conversationId}`);
       } catch (error) { toast(friendlyError(error)); }
       finally { setStartingMistake(false); }
       return;

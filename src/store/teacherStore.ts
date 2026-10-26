@@ -40,6 +40,8 @@ export interface TeacherStore {
   refreshConversations(): Promise<void>;
   openConversation(id: string): Promise<void>;
   send(text: string, settings?: SendSettings): Promise<void>;
+  readonly canStop: boolean;
+  stopReply(): boolean;
   retryTurn(index: number): Promise<void>;
   similar(question: Question): Promise<void>;
   refreshJobs(): Promise<void>;
@@ -293,6 +295,9 @@ export function createTeacherStore(options: {
     emit();
 
     let turn: Turn | undefined;
+    let cancelled = false;
+    let stopped!: () => void;
+    const cancellation = new Promise<void>((resolve) => { stopped = resolve; });
     try {
       if (!state.activeId || settings.newConversation) {
         const created = await client.createConversation(content.slice(0, 50));
@@ -326,7 +331,7 @@ export function createTeacherStore(options: {
       emit();
 
       const current = turn;
-      activeRequest = client.sendMessage(
+      const transport = client.sendMessage(
         state.activeId,
         {
           text: content,
@@ -336,14 +341,25 @@ export function createTeacherStore(options: {
             : {}),
         },
         (event) => {
+          if (cancelled) return;
           applyEvent(current, event);
           emit();
         },
       );
 
+      activeRequest = {
+        done: Promise.race([transport.done, cancellation]),
+        cancel() {
+          if (cancelled) return;
+          cancelled = true;
+          void Promise.resolve(transport.cancel()).catch(() => {}).finally(stopped);
+        },
+      };
+      emit();
       await activeRequest.done;
       if (turn.error) throw stateError(turn.error);
     } catch (error) {
+      if (cancelled) return;
       const code = (error as ApiError).code ?? "NETWORK_ERROR";
       state.error = code;
       if (turn) turn.error = code;
@@ -542,6 +558,12 @@ export function createTeacherStore(options: {
     openConversation,
     send,
     retryTurn,
+    get canStop() { return !!activeRequest && state.busy; },
+    stopReply() {
+      if (!activeRequest || !state.busy) return false;
+      activeRequest.cancel();
+      return true;
+    },
     similar,
     refreshJobs,
     redeemCredits,

@@ -282,3 +282,7 @@
   gap: 12px;
   padding: 0 14px 14px;
 }
+
+.mistake-turn { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.mistake-turn__photo { align-self: flex-end; padding: 0; max-width: 160px; border-radius: 12px; overflow: hidden; }
+.mistake-turn__photo img { display: block; max-width: 100%; height: auto; }

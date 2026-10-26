@@ -1,0 +1,30 @@
+import { expect, it, vi } from 'vitest';
+import { createTeacherStore } from '../src/store/teacherStore';
+import type { TutorClient } from '../src/api/client';
+import type { AgentEvent } from '../src/api/types';
+it('stops a pending stream, retains its content, ignores late events and can send again', async () => {
+  let emit!: (e: AgentEvent) => void;
+  const cancel = vi.fn();
+  const sendMessage = vi.fn((_id, _input, onEvent) => {
+    emit = onEvent;
+    return { done: new Promise<void>(() => {}), cancel };
+  });
+  const store = createTeacherStore({ client: { sendMessage } as unknown as TutorClient });
+  store.state.activeId = 'c';
+  const pending = store.send('解题');
+  emit({ type: 'text', text: '部分回复' });
+  expect(store.canStop).toBe(true);
+  expect(store.stopReply()).toBe(true);
+  await pending;
+  expect(cancel).toHaveBeenCalledOnce();
+  emit({ type: 'text', text: '不该追加' });
+  expect(store.state.turns[0].reply).toBe('部分回复');
+  expect(store.state.turns[0].error).toBeNull();
+  expect(store.state.error).toBeNull();
+  expect(store.state.busy).toBe(false);
+  expect(store.canStop).toBe(false);
+  expect(store.stopReply()).toBe(false);
+  sendMessage.mockReturnValueOnce({ done: Promise.resolve(), cancel });
+  await store.send('下一问');
+  expect(store.state.turns).toHaveLength(2);
+});

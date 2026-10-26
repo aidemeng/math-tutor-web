@@ -18,11 +18,12 @@ export const API_BASE_URL = String(import.meta.env.VITE_API_BASE_URL || '').repl
 export interface StreamHandle {
   /** 流正常结束（收到 done）时 resolve，否则 reject。 */
   done: Promise<void>;
-  cancel: () => void;
+  cancel: () => void | Promise<void>;
 }
 
 export interface MessageOptions {
   text: string;
+  requestId?: string;
   photoId?: string;
   selectedQuestion?: { id: string; bankVersion: string };
 }
@@ -31,6 +32,7 @@ export interface TutorClient {
   listMistakeAnalyses(conversationId:string): Promise<{analyses:MistakeAnalysis[]}>;
   createMistakeAnalysis(input:{conversationId:string;photoId:string;request:string}): Promise<{analysis:MistakeAnalysis}>;
   confirmMistakeAnalysis(id:string,input:MistakeInput): Promise<{analysis:MistakeAnalysis}>;
+  clarifyMistakeAnalysis(id:string,reply:string,photoId?:string): Promise<{analysis:MistakeAnalysis}>;
   retryMistakeAnalysis(id:string): Promise<{analysis:MistakeAnalysis}>;
   recordMistakeOutcome(id:string,outcome:MistakeAnalysis['outcome']): Promise<{analysis:MistakeAnalysis}>;
   getTeachingGuide(questionId: string, bankVersion: string, studentContext?: string): Promise<{guide: TeachingGuide | null}>;
@@ -230,6 +232,7 @@ export function createClient(options: { getToken: () => string | null }): TutorC
     listMistakeAnalyses: (conversationId) => request(`/v1/mistake-analyses${query({conversationId})}`),
     createMistakeAnalysis: (input) => request('/v1/mistake-analyses',{method:'POST',body:JSON.stringify(input)}),
     confirmMistakeAnalysis: (id,input) => request(`/v1/mistake-analyses/${encodeURIComponent(id)}/confirm`,{method:'POST',body:JSON.stringify(input)}),
+    clarifyMistakeAnalysis: (id,reply,photoId) => request(`/v1/mistake-analyses/${encodeURIComponent(id)}/clarify`,{method:'POST',body:JSON.stringify({reply,photoId})}),
     retryMistakeAnalysis: (id) => request(`/v1/mistake-analyses/${encodeURIComponent(id)}/retry`,{method:'POST'}),
     recordMistakeOutcome: (id,outcome) => request(`/v1/mistake-analyses/${encodeURIComponent(id)}/outcome`,{method:'PATCH',body:JSON.stringify({outcome})}),
     getTeachingGuide: (questionId, bankVersion, studentContext) => request(`/v1/teaching-guides${query({questionId,bankVersion})}${studentContext === undefined ? "" : "&studentContext=" + encodeURIComponent(studentContext)}`),
@@ -254,8 +257,22 @@ export function createClient(options: { getToken: () => string | null }): TutorC
       request<Conversation>('/v1/conversations', { method: 'POST', body: JSON.stringify({ title }) }),
     listConversations: () => request('/v1/conversations'),
     getConversation: (id) => request(`/v1/conversations/${encodeURIComponent(id)}`),
-    sendMessage: (id, options, onEvent) =>
-      streamMessage(`/v1/conversations/${encodeURIComponent(id)}/messages`, options, onEvent),
+    sendMessage: (id, options, onEvent) => {
+      const requestId = crypto.randomUUID();
+      const stream = streamMessage(`/v1/conversations/${encodeURIComponent(id)}/messages`, { ...options, requestId }, onEvent);
+      let stopping = false;
+      return {
+        done: stream.done,
+        cancel() {
+          if (stopping) return;
+          stopping = true;
+          // Mark the stop before closing SSE so history does not treat it as a network failure.
+          return request<void>(`/v1/conversations/${encodeURIComponent(id)}/cancel`, {
+            method: 'POST', body: JSON.stringify({ requestId }), signal: AbortSignal.timeout(5000),
+          }).catch(() => {}).finally(() => stream.cancel());
+        },
+      };
+    },
 
     uploadPhoto: (conversationId, input) =>
       request(`/v1/conversations/${encodeURIComponent(conversationId)}/photos`, {

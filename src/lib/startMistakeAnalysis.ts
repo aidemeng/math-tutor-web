@@ -1,7 +1,7 @@
 import type { TutorClient } from "../api/client";
 import type { PhotoPayload } from "./photo";
 
-/** Explicit diagnosis uses a persisted two-stage workflow rather than ordinary chat text. */
+/** Diagnosis runs in the background; only ambiguous input needs a conversational clarification. */
 export async function startMistakeAnalysis(
   client: TutorClient,
   photo: PhotoPayload,

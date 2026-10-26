@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { TutorClient } from "../../api/client";
-import type { MistakeAnalysis, MistakeInput } from "../../api/types";
+import type { MistakeAnalysis } from "../../api/types";
 import { friendlyError } from "../../api/errors";
 import { toast } from "../Toast";
 import { Sheet } from "../Sheet";
 import { Icon } from "../Icon";
 import { Markdown } from "../Markdown";
 import { MistakeAnalysisDetail } from "./MistakeAnalysisDetail";
+import { MistakeTurn } from "./MistakeTurn";
 import "../../styles/mistakes.css";
 
 export function MistakeAnalyses({
@@ -15,12 +16,14 @@ export function MistakeAnalyses({
   refresh = 0,
   initialOpenId = null,
   onRecordsChange,
+  onPendingChange,
 }: {
   client: TutorClient;
   conversationId: string;
   refresh?: number;
   initialOpenId?: string | null;
   onRecordsChange?(hasRecords: boolean): void;
+  onPendingChange?(id: string | null): void;
 }) {
   const [rows, setRows] = useState<MistakeAnalysis[]>([]),
     [open, setOpen] = useState<string | null>(initialOpenId);
@@ -47,6 +50,9 @@ export function MistakeAnalyses({
         if (!current) return;
         setLoadFailed(false);
         onRecordsChange?.(analyses.length > 0);
+        onPendingChange?.(
+          analyses.find((row) => row.status === "confirmation")?.id ?? null,
+        );
         setRows((previous) =>
           analyses.map((row) => {
             const old = previous.find((item) => item.id === row.id);
@@ -75,7 +81,14 @@ export function MistakeAnalyses({
       current = false;
       clearTimeout(timer);
     };
-  }, [client, conversationId, refresh, retry, onRecordsChange]);
+  }, [
+    client,
+    conversationId,
+    refresh,
+    retry,
+    onRecordsChange,
+    onPendingChange,
+  ]);
   async function mutate(request: () => Promise<{ analysis: MistakeAnalysis }>) {
     if (saving) return;
     setSaving(true);
@@ -92,7 +105,9 @@ export function MistakeAnalyses({
       if (alive.current) setSaving(false);
     }
   }
-  const selected = rows.find((row) => row.id === open);
+  const selected = rows.find(
+    (row) => row.id === open && row.status === "ready",
+  );
   return (
     <>
       {rows.length > 0 && (
@@ -102,66 +117,86 @@ export function MistakeAnalyses({
             const suggested = row.candidates.findIndex(
               (item) => item.complete && item.studentAnswer.trim(),
             );
-            const label =
-              row.status === "recognizing"
-                ? "正在识别题目"
-                : row.status === "confirmation"
-                  ? "确认题目与作答"
-                  : row.status === "analyzing"
-                    ? "正在分析错题"
-                    : row.status === "failed"
-                      ? "分析未完成"
-                      : "查看分析";
-            return (
-              <button
-                key={row.id}
-                type="button"
-                className="mistake-card"
-                onClick={() => setOpen(row.id)}
-              >
-                <div className="mistake-card__heading">
-                  <span>
-                    <Icon name="chart" size={16} />
-                    错题分析
-                  </span>
-                  <span className="mistake-label">
-                    {row.status === "ready"
-                      ? result?.verdict === "incorrect"
-                        ? "答案有误"
-                        : result?.verdict === "correct"
-                          ? "作答正确"
-                          : "待核对"
-                      : label}
-                  </span>
-                </div>
-                <strong>
-                  {result?.topic ||
-                    row.candidates[
-                      row.input?.candidateIndex ?? Math.max(0, suggested)
-                    ]?.label ||
-                    "识别题目与学生作答"}
-                </strong>
-                {result && (
-                  <div className="mistake-card__summary">
-                    <Markdown
-                      value={
-                        result.hypotheses[0]
-                          ? `可能原因：${result.hypotheses[0]}`
-                          : result.summary
-                      }
-                    />
+            if (row.status !== "ready")
+              return (
+                <MistakeTurn key={row.id} client={client} analysis={row}>
+                  <div className="mistake-card">
+                    <p>
+                      {row.status === "confirmation"
+                        ? row.clarification ||
+                          "你想分析图片中的哪一道题？请告诉我题号或具体位置。"
+                        : row.status === "failed"
+                          ? "这次没能完成分析，图片已保留。"
+                          : "正在查看题目与作答，整理错题分析…"}
+                    </p>
+                    {row.status === "failed" && (
+                      <button
+                        className="btn btn--quiet"
+                        disabled={saving}
+                        onClick={() =>
+                          void mutate(() => client.retryMistakeAnalysis(row.id))
+                        }
+                      >
+                        重新尝试
+                      </button>
+                    )}
                   </div>
-                )}
-                <div className="mistake-card__footer">
-                  <span>
-                    {result?.hypotheses.length ? "错因待验证" : "核对原图证据"}
-                  </span>
-                  <span>
-                    {label}
-                    <Icon name="chevron" size={15} />
-                  </span>
-                </div>
-              </button>
+                </MistakeTurn>
+              );
+            const label = "查看分析";
+            return (
+              <MistakeTurn key={row.id} client={client} analysis={row}>
+                <button
+                  type="button"
+                  className="mistake-card"
+                  onClick={() => setOpen(row.id)}
+                >
+                  <div className="mistake-card__heading">
+                    <span>
+                      <Icon name="chart" size={16} />
+                      错题分析
+                    </span>
+                    <span className="mistake-label">
+                      {row.status === "ready"
+                        ? result?.verdict === "incorrect"
+                          ? "答案有误"
+                          : result?.verdict === "correct"
+                            ? "作答正确"
+                            : "待核对"
+                        : label}
+                    </span>
+                  </div>
+                  <strong>
+                    {result?.topic ||
+                      row.candidates[
+                        row.input?.candidateIndex ?? Math.max(0, suggested)
+                      ]?.label ||
+                      "识别题目与学生作答"}
+                  </strong>
+                  {result && (
+                    <div className="mistake-card__summary">
+                      <Markdown
+                        value={
+                          result.hypotheses[0]
+                            ? `可能原因：${result.hypotheses[0]}`
+                            : result.summary
+                        }
+                      />
+                    </div>
+                  )}
+                  <div className="mistake-card__footer">
+                    <span>
+                      {result?.hypotheses.length
+                        ? "错因待验证"
+                        : "核对原图证据"}
+                    </span>
+                    <span>
+                      {label}
+                      <Icon name="chevron" size={15} />
+                    </span>
+                  </div>
+                </button>
+              </MistakeTurn>
             );
           })}
         </div>
@@ -182,11 +217,6 @@ export function MistakeAnalyses({
             analysis={selected}
             client={client}
             busy={saving}
-            onConfirm={(input: MistakeInput) =>
-              void mutate(() =>
-                client.confirmMistakeAnalysis(selected.id, input),
-              )
-            }
             onRetry={() =>
               void mutate(() => client.retryMistakeAnalysis(selected.id))
             }

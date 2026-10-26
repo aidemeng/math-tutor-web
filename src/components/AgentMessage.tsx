@@ -53,7 +53,7 @@ export function AgentMessage({
             ) : null}
           </div>
         ) : null}
-        {children}
+        {!streaming ? children : null}
       </div>
     </div>
   );

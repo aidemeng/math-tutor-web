@@ -147,7 +147,9 @@
 .composer__icon--voice:disabled {
   opacity: 0.4;
 }
-.composer__icon--voice.is-recording {
+.composer__icon--voice.is-recording,
+.composer__icon--stop,
+.composer__icon--stop:active:not(:disabled) {
   color: #b64438;
   background: #fff0ed;
 }

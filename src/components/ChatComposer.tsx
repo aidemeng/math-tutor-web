@@ -18,6 +18,7 @@ interface ComposerProps {
   onChange(value: string): void;
   onPhotoChange(photo: PhotoPayload | null): void;
   onSend(): void;
+  onStop?(): void;
   onError(message: string): void;
   fileInputRef?: RefObject<HTMLInputElement | null>;
   inputRef?: RefObject<HTMLTextAreaElement | null>;
@@ -39,6 +40,7 @@ export function ChatComposer({
   onChange,
   onPhotoChange,
   onSend,
+  onStop,
   onError,
   fileInputRef,
   inputRef,
@@ -234,13 +236,13 @@ export function ChatComposer({
         </button>
         <button
           type="button"
-          className="composer__icon composer__icon--send"
+          className={`composer__icon composer__icon--send${busy && onStop ? " composer__icon--stop" : ""}`}
           hidden={voiceState !== "idle"}
-          onClick={onSend}
-          disabled={!canSend}
-          aria-label="发送"
+          onClick={busy && onStop ? onStop : onSend}
+          disabled={busy && onStop ? false : !canSend}
+          aria-label={busy && onStop ? "停止生成" : "发送"}
         >
-          <Icon name="send" size={20} />
+          <Icon name={busy && onStop ? "stop" : "send"} size={20} />
         </button>
       </div>
 
