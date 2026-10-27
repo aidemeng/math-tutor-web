@@ -3,13 +3,13 @@ import { useNavigate } from "react-router-dom";
 import type { BookItem, BookKind } from "../api/types";
 import { friendlyError } from "../api/errors";
 import { useApp } from "../store/AppContext";
-import { Markdown } from "../components/Markdown";
+import { QuestionReader } from "../components/QuestionReader";
 import { Sheet } from "../components/Sheet";
-import { QuestionDiagrams } from "../components/QuestionDiagram";
 import { MistakeAnalysisDetail } from "../components/mistakes/MistakeAnalysisDetail";
 import { MistakeSource } from "../components/mistakes/MistakeSource";
 import { toast } from "../components/Toast";
 import { questionView } from "../lib/questionView";
+import { Markdown } from "../components/Markdown";
 import "../styles/question-book.css";
 import "../styles/mistakes.css";
 import "../styles/card.css";
@@ -200,7 +200,7 @@ export function QuestionBookPage() {
         </button>
       )}
       <Sheet
-        open={!!selected}
+        open={!!selected?.analysis}
         title={
           source ? "原题与作答" : selected?.analysis ? "错题分析" : "题目与解析"
         }
@@ -208,26 +208,6 @@ export function QuestionBookPage() {
           if (source) setSource(false);
           else setSelected(null);
         }}
-        navigation={
-          q ? (
-            <div
-              className="book-reader-tabs"
-              role="tablist"
-              aria-label="题目阅读内容"
-            >
-              {(["question", "analysis"] as const).map((value) => (
-                <button
-                  role="tab"
-                  aria-selected={tab === value}
-                  key={value}
-                  onClick={() => setTab(value)}
-                >
-                  {value === "question" ? "题目" : "解析"}
-                </button>
-              ))}
-            </div>
-          ) : undefined
-        }
       >
         {selected && (
           <div className="book-detail">
@@ -242,24 +222,16 @@ export function QuestionBookPage() {
                   onExpand={expandSolution}
                 />
               )
-            ) : (
-              q && (
-                <>
-                  <h2 className="book-detail-title">{q.title}</h2>
-                  <Markdown
-                    value={tab === "question" ? q.stem : q.explanation}
-                    questionKey={q.key}
-                  />
-                  <QuestionDiagrams
-                    diagrams={selected.question?.diagrams}
-                    section={tab}
-                  />
-                </>
-              )
-            )}
+            ) : null}
           </div>
         )}
       </Sheet>
+      <QuestionReader
+        detail={q}
+        readerTab={tab}
+        setReaderTab={setTab}
+        onClose={() => setSelected(null)}
+      />
     </main>
   );
 }

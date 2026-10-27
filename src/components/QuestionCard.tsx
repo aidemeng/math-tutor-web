@@ -9,7 +9,7 @@ export type DeriveKind = "similar" | "variant" | "easy";
 
 interface QuestionCardProps {
   questionKey: string;
-  onDerive(kind: DeriveKind, key: string): void;
+  onDerive?(kind: DeriveKind, key: string): void;
   disabled?: boolean;
 }
 
@@ -95,19 +95,21 @@ export function QuestionCard({
 
       <QuestionDiagrams diagrams={raw?.diagrams} />
 
-      <div className="qcard__derive" role="group" aria-label="派生新题">
-        {DERIVE_ACTIONS.map((action) => (
-          <button
-            key={action.kind}
-            type="button"
-            className="qcard__derive-btn"
-            onClick={() => onDerive(action.kind, questionKey)}
-            disabled={disabled}
-          >
-            {action.label}
-          </button>
-        ))}
-      </div>
+      {onDerive && (
+        <div className="qcard__derive" role="group" aria-label="派生新题">
+          {DERIVE_ACTIONS.map((action) => (
+            <button
+              key={action.kind}
+              type="button"
+              className="qcard__derive-btn"
+              onClick={() => onDerive?.(action.kind, questionKey)}
+              disabled={disabled}
+            >
+              {action.label}
+            </button>
+          ))}
+        </div>
+      )}
     </>
   );
   return (

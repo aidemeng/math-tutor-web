@@ -1,6 +1,5 @@
 import { selectBookQuestion, consumeBookExpansion } from "../lib/bookFollowUp";
 import type { BookItem, Turn } from "../api/types";
-import { QuestionAnnotations } from "../components/QuestionAnnotations";
 import { UserMessage } from "../components/UserMessage";
 import { TurnError } from "../components/TurnError";
 import { VideoDraftCard } from "../components/VideoDraftCard";
@@ -17,11 +16,10 @@ import { AgentMessage } from "../components/AgentMessage";
 import { ChatComposer } from "../components/ChatComposer";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { Icon } from "../components/Icon";
-import { QuestionDiagrams } from "../components/QuestionDiagram";
 import { Markdown } from "../components/Markdown";
-import { QuestionCard, type DeriveKind } from "../components/QuestionCard";
+import { type DeriveKind } from "../components/QuestionCard";
 import { QuestionResults } from "../components/QuestionResults";
-import { Sheet } from "../components/Sheet";
+import { QuestionReader } from "../components/QuestionReader";
 import { toast, useErrorToast } from "../components/Toast";
 import { derivePrompt, questionView } from "../lib/questionView";
 import type { PhotoPayload } from "../lib/photo";
@@ -59,22 +57,10 @@ export function ChatPage() {
   const [photo, setPhoto] = useState<PhotoPayload | null>(null);
   const [quote, setQuote] = useState<QuestionQuote | null>(null);
   const composerInputRef = useRef<HTMLTextAreaElement>(null);
-  const [annotationActions, setAnnotationActions] =
-    useState<HTMLDivElement | null>(null);
   const [detailKey, setDetailKey] = useState<string | null>(null);
   const [readerTab, setReaderTab] = useState<"question" | "analysis">(
     "question",
   );
-  const readerRef = useRef<HTMLDivElement>(null);
-  const readerPositions = useRef<Record<string, number>>({});
-  useLayoutEffect(() => {
-    const scroller = readerRef.current?.parentElement;
-    const key = `${detailKey}:${readerTab}`;
-    scroller?.scrollTo({ top: readerPositions.current[key] ?? 0 });
-    return () => {
-      if (scroller) readerPositions.current[key] = scroller.scrollTop;
-    };
-  }, [detailKey, readerTab]);
   const [videoKey, setVideoKey] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [conversationError, setConversationError] = useState("");
@@ -611,58 +597,29 @@ export function ChatPage() {
         />
       </div>
 
-      <Sheet
-        open={!!detail}
-        title="题目与解析"
+      <QuestionReader
+        detail={detail}
+        readerTab={readerTab}
+        setReaderTab={setReaderTab}
         onClose={() => setDetailKey(null)}
-        navigation={
-          <div className="question-reader__navigation">
-            <div
-              className="question-reader__tabs"
-              role="tablist"
-              aria-label="题目阅读内容"
-            >
-              {(["question", "analysis"] as const).map((tab, index) => (
-                <button
-                  key={tab}
-                  type="button"
-                  role="tab"
-                  id={`reader-tab-${tab}`}
-                  aria-selected={readerTab === tab}
-                  aria-controls={`reader-panel-${tab}`}
-                  tabIndex={readerTab === tab ? 0 : -1}
-                  onClick={() => setReaderTab(tab)}
-                  onKeyDown={(event) => {
-                    if (
-                      ["ArrowLeft", "ArrowRight", "Home", "End"].includes(
-                        event.key,
-                      )
-                    ) {
-                      event.preventDefault();
-                      const tabs = ["question", "analysis"] as const;
-                      const next =
-                        tabs[
-                          event.key === "Home"
-                            ? 0
-                            : event.key === "End"
-                              ? 1
-                              : (index + 1) % 2
-                        ];
-                      setReaderTab(next);
-                      document.getElementById(`reader-tab-${next}`)?.focus();
-                    }
-                  }}
-                >
-                  {tab === "question" ? "题目" : "解析"}
-                </button>
-              ))}
-            </div>
-            <div
-              className="question-reader__actions"
-              ref={setAnnotationActions}
-            />
-          </div>
-        }
+        busy={busy}
+        onDerive={(kind, key) => {
+          setDetailKey(null);
+          void derive(kind, key);
+        }}
+        onQuote={(text) => {
+          if (!detail) return;
+          setBookContext(null);
+          setQuote({
+            questionId: detail.id,
+            bankVersion: detail.bankVersion,
+            source: detail.source,
+            section: readerTab,
+            text,
+          });
+          setDetailKey(null);
+          requestAnimationFrame(() => composerInputRef.current?.focus());
+        }}
         footer={
           detailKey ? (
             <button
@@ -671,7 +628,7 @@ export function ChatPage() {
               disabled={busy}
               onClick={() => {
                 setDetailKey(null);
-                if (detailKey) setVideoKey(detailKey);
+                setVideoKey(detailKey);
               }}
             >
               <Icon name="square-play" size={22} />
@@ -679,65 +636,7 @@ export function ChatPage() {
             </button>
           ) : undefined
         }
-      >
-        <div ref={readerRef} className="question-reader">
-          <div
-            role="tabpanel"
-            id={`reader-panel-${readerTab}`}
-            aria-labelledby={`reader-tab-${readerTab}`}
-          >
-            {detail && (
-              <QuestionAnnotations
-                key={detail.key}
-                question={detail}
-                section={readerTab}
-                client={client}
-                actionsTarget={annotationActions}
-                onQuote={(text) => {
-                  setBookContext(null);
-                  setQuote({
-                    questionId: detail.id,
-                    bankVersion: detail.bankVersion,
-                    source: detail.source,
-                    section: readerTab,
-                    text,
-                  });
-                  setDetailKey(null);
-                  requestAnimationFrame(() =>
-                    composerInputRef.current?.focus(),
-                  );
-                }}
-              >
-                {detailKey && readerTab === "question" ? (
-                  <QuestionCard
-                    questionKey={detailKey}
-                    disabled={busy}
-                    onDerive={(kind, key) => {
-                      setDetailKey(null);
-                      void derive(kind, key);
-                    }}
-                  />
-                ) : detail ? (
-                  <div className="question-reader__analysis">
-                    <div className="sheet__meta">
-                      <span className="pill pill--plain">{detail.source}</span>
-                    </div>
-                    <h3 className="sheet__heading">{detail.title}</h3>
-                    <QuestionDiagrams
-                      diagrams={detail.raw.diagrams}
-                      section="analysis"
-                    />
-                    <Markdown
-                      value={detail.explanation || detail.answer || "暂无解析"}
-                      questionKey={detailKey ?? undefined}
-                    />
-                  </div>
-                ) : null}
-              </QuestionAnnotations>
-            )}
-          </div>
-        </div>
-      </Sheet>
+      />
 
       <ConfirmDialog
         open={!!videoQuestion}
